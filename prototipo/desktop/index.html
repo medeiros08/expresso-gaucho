@@ -2,7 +2,16 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Linhas, horários e ônibus ao vivo em Alegrete/RS.">
+<meta name="theme-color" content="#002460">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fronteira">
 <title>Fronteira Transportes · Linhas e Horários</title>
 <style>
 :root{
@@ -181,8 +190,19 @@ footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;pad
 .res .tt{font-size:22px;font-weight:800;color:var(--navy-800);font-variant-numeric:tabular-nums}
 .arrow{color:var(--ink-2)}
 .dur{font-size:12px;font-weight:700;color:var(--ink-2);background:var(--bg);border-radius:999px;padding:3px 9px}
+.tabbar{display:none}
+.netbar{display:none;background:#78350F;color:#fff;font-size:13.5px;font-weight:600;text-align:center;padding:8px 16px}
+.netbar.show{display:block}
+.pill.install{background:#fff;color:var(--navy-800);border-color:#fff}
+.pill.install:hover{background:var(--navy-50)}
+.toast .act{margin-top:8px;background:#fff;color:var(--navy-800);border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px}
+.steps{counter-reset:s;list-style:none;margin:14px 0 20px}
+.steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;padding:8px 0;line-height:1.45}
+.steps li:before{content:counter(s);min-width:26px;height:26px;border-radius:50%;background:var(--navy-800);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+@media (max-width:480px){.brand>div:last-child{display:none}.nav-right{gap:8px}}
+@media (display-mode:standalone){.pill.install{display:none!important}}
 @media (max-width:1240px){.nav-right>.pill:not(.btn){display:none}}
-@media (max-width:980px){.nav-right>.pill{display:none}.brand small{display:none}.hero h1{font-size:28px}.g-2,.g-3,.g-main,.lgrid{grid-template-columns:1fr}.nav-links{display:none}.tgrid{grid-template-columns:repeat(5,1fr)}.planner{flex-direction:column;align-items:stretch}.container{padding:0 16px}}
+@media (max-width:980px){.nav-right>.pill:not(.install){display:none}body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}.tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(15,23,42,.06)}.tabbar a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--ink-2);padding:4px 0}.tabbar a.on{color:var(--navy-800)}.toasts{bottom:calc(80px + env(safe-area-inset-bottom));right:12px;left:12px}.toast{min-width:0;max-width:none}.nav{padding-top:env(safe-area-inset-top)}.nav .container{height:60px;gap:10px}.hero{padding:22px 0 26px}main{padding:18px 0 28px}.card{padding:16px}.toolbar{flex-direction:column;align-items:stretch}.toolbar>.row{overflow-x:auto;padding-bottom:2px}.next{padding:18px}.next .big{font-size:36px}.seg{display:flex;width:100%}.seg button{flex:1;padding:9px 6px;font-size:13px}.res{flex-wrap:wrap;gap:10px}.res .tt{font-size:18px}.pill{padding:7px 11px;font-size:13px}.card-h{flex-wrap:wrap}.grid.kpis{grid-template-columns:repeat(3,1fr);gap:8px}.kpis .card{padding:12px}.kpis.grid .kpi b{font-size:21px}.kpis .kpi span{font-size:11px;line-height:1.25;display:block}.ins-txt{display:none}footer{font-size:12px}.brand small{display:none}.hero h1{font-size:28px}.g-2,.g-3,.g-main,.lgrid{grid-template-columns:1fr}.nav-links{display:none}.tgrid{grid-template-columns:repeat(5,1fr)}.planner{flex-direction:column;align-items:stretch}.container{padding:0 16px}}
 </style>
 </head>
 <body>
@@ -201,6 +221,7 @@ footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;pad
       <a href="#/favoritos" data-k="favoritos">Favoritos <span id="favcount"></span></a>
     </div>
     <div class="nav-right">
+      <button class="pill btn install" id="installBtn" style="display:none" onclick="installApp()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Instalar<span class="ins-txt">&nbsp;app</span></button>
       <a class="pill btn" href="../admin/" title="Área da empresa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Empresa</a>
       <div class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Alegrete · RS</div>
       <div style="position:relative">
@@ -230,6 +251,7 @@ footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;pad
   </div>
 </nav>
 
+<div class="netbar" id="netbar">📴 Sem internet. Mostrando os horários salvos no aparelho.</div>
 <div id="app" style="flex:1;display:flex;flex-direction:column"></div>
 
 <footer><div class="container row between wrap">
@@ -238,6 +260,7 @@ footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;pad
 </div></footer>
 
 <div class="modal-bg" id="modalBg" onclick="closeModal()"><div class="modal" id="modal" onclick="event.stopPropagation()"></div></div>
+<nav class="tabbar" id="tabbar"><a href="#/inicio" data-k="inicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7v9H3z"/></svg>Início</a><a href="#/linhas" data-k="linhas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</a><a href="#/planejar" data-k="planejar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></svg>Como chegar</a><a href="#/mapa" data-k="mapa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Mapa</a><a href="#/favoritos" data-k="favoritos"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Favoritos</a></nav>
 <div class="toasts" id="toasts"></div>
 
 <script src="dados.js"></script>
@@ -322,7 +345,7 @@ function NOW(){
 /* ================= CLOCK / SIM ================= */
 function renderClock(){
   const n=NOW();
-  $('#clock').textContent=DIAS[n.dow].slice(0,3)+' · '+fmt(n.min)+(S.sim.on?' · Demo':'');
+  $('#clock').textContent=(innerWidth<480?'':DIAS[n.dow].slice(0,3)+' · ')+fmt(n.min)+(S.sim.on?' · Demo':'');
   $('#clockBtn').classList.toggle('sim',S.sim.on);
   $('#simSw').classList.toggle('on',S.sim.on);
   $('#simBox').style.opacity=S.sim.on?1:.4;$('#simBox').style.pointerEvents=S.sim.on?'auto':'none';
@@ -386,6 +409,7 @@ window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0)});
 let LIVE=()=>{};
 function route(){
   const h=location.hash||'#/inicio';const p=h.slice(2).split('/');
+  document.querySelectorAll('#tabbar a').forEach(a=>a.classList.toggle('on',a.dataset.k===p[0]||(p[0]==='linha'&&a.dataset.k==='linhas')));
   document.querySelectorAll('#navlinks a').forEach(a=>a.classList.toggle('on',a.dataset.k===p[0]||(p[0]==='linha'&&a.dataset.k==='linhas')));
   $('#favcount').textContent=S.fav.size?'('+S.fav.size+')':'';
   const v={inicio:vHome,linhas:vLines,linha:vDetail,planejar:vPlan,mapa:vMap,favoritos:vFav}[p[0]]||vHome;
@@ -414,7 +438,7 @@ function vHome(){
     <button class="btn" style="height:52px;padding:0 26px" onclick="doPlan()">${ICON.search.replace('#64748B','#fff')} Buscar viagens</button>
   </div>`)+
   `<main><div class="container">
-    <div class="grid g-3" style="margin-bottom:20px">
+    <div class="grid g-3 kpis" style="margin-bottom:20px">
       <div class="card kpi"><b>${LINES.length}</b><span>linhas em Alegrete</span></div>
       <div class="card kpi"><b>${ALLSTOPS.length}</b><span>paradas com horário</span></div>
       <div class="card kpi"><b id="kTrips">${trips}</b><span>viagens programadas hoje (${DIAS[n.dow]})</span></div>
@@ -700,6 +724,38 @@ function vFav(){
 function toggleAlert(id){const a=S.alerts.find(x=>x.id===id);a.on=!a.on;a.fired=null;save();LIVE()}
 function delAlert(id){S.alerts=S.alerts.filter(x=>x.id!==id);save();route()}
 function testAlert(){toast('🚌 Seu ônibus está chegando!','IP Ibirapuitã → Polivalente passa em Unipampa em 5 min',true)}
+
+/* ================= PWA: instalação, offline e atualização ================= */
+let installEvt=null;
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const IOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function showInstall(v){$('#installBtn').style.display=v&&!standalone()?'':'none'}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;showInstall(true)});
+window.addEventListener('appinstalled',()=>{installEvt=null;showInstall(false);toast('App instalado! 🎉','Abra pelo ícone "Fronteira" na tela inicial.')});
+if(IOS)showInstall(true);
+async function installApp(){
+  if(installEvt){installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;if(r.outcome==='accepted')showInstall(false);return}
+  $('#modal').innerHTML=`<div class="row" style="margin-bottom:4px"><img src="icons/icon-192.png" width="52" height="52" style="border-radius:14px" alt=""><div><div style="font-weight:800;font-size:18px">Instalar o app Fronteira</div><div class="small muted">Funciona sem internet e abre direto da tela inicial</div></div></div>
+  <ol class="steps">${IOS?
+   `<li><span>No Safari, toque no botão <b>Compartilhar</b> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2" style="vertical-align:-3px"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg> na barra inferior.</span></li><li><span>Role e toque em <b>Adicionar à Tela de Início</b>.</span></li><li><span>Toque em <b>Adicionar</b>. O ícone da Fronteira aparece na tela inicial.</span></li>`:
+   `<li><span>Abra o menu do navegador (<b>⋮</b> no Chrome ou <b>…</b> no Edge).</span></li><li><span>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</span></li><li><span>Confirme. O app abre em tela cheia, como um aplicativo.</span></li>`}</ol>
+  <button class="btn" style="width:100%" onclick="closeModal()">Entendi</button>`;
+  $('#modalBg').classList.add('open');
+}
+function setNet(){$('#netbar').classList.toggle('show',!navigator.onLine)}
+window.addEventListener('offline',setNet);
+window.addEventListener('online',()=>{setNet();toast('Conexão restabelecida','Os horários serão atualizados automaticamente.')});
+setNet();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+  const tinha=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    const avisar=w=>{const el=document.createElement('div');el.className='toast';el.innerHTML=`<div class="code sm" style="background:rgba(255,255,255,.12)">${ICON.bus}</div><div><b>Nova versão disponível</b><span>Atualize para ver as últimas melhorias.</span><br><button class="act">Atualizar agora</button></div>`;el.querySelector('.act').onclick=()=>{w.postMessage('atualizar');el.remove()};$('#toasts').appendChild(el)};
+    if(reg.waiting&&tinha)avisar(reg.waiting);
+    reg.addEventListener('updatefound',()=>{const w=reg.installing;w&&w.addEventListener('statechange',()=>{if(w.state==='installed'&&navigator.serviceWorker.controller)avisar(w)})});
+  }).catch(()=>{});
+  let recarregou=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!tinha||recarregou)return;recarregou=true;location.reload()});
+}
 
 /* ================= LOOP ================= */
 let last=Date.now();
