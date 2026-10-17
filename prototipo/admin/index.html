@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
 <link rel="icon" type="image/png" sizes="32x32" href="../desktop/icons/favicon-32.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <title>Área da empresa · Fronteira</title>
 <style>
 :root{
@@ -139,6 +140,11 @@ tr:hover .sc .ops{opacity:1}
 .cell:placeholder-shown{color:var(--line-2)}
 .cell.bad{background:var(--red-bg);color:var(--red)}
 .cell.chg{background:#FFFBEB}
+.tin{width:72px;height:32px;text-align:center;padding:0 4px}
+.tin.on{border-color:var(--navy-800);background:var(--navy-25);font-weight:700}
+.leaflet-tile-pane{filter:saturate(.35) contrast(.95) brightness(1.03)}
+.leaflet-container{font-family:inherit}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
 .modal-bg{position:fixed;inset:0;background:rgba(13,27,53,.55);display:none;align-items:center;justify-content:center;z-index:80;padding:16px}
 .modal-bg.open{display:flex}
@@ -190,8 +196,10 @@ tr:hover .sc .ops{opacity:1}
   <aside class="side">
     <div class="brand"><div class="brand-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 7h8"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg></div><div><b>Fronteira</b><small>Área da empresa</small></div></div>
     <a class="nl" href="#/painel" data-k="painel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Painel</a>
+    <a class="nl" href="#/tempo" data-k="tempo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 7 4-14 3 7h4"/></svg>Tempo real</a>
     <a class="nl" href="#/linhas" data-k="linhas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</a>
     <a class="nl" href="#/horarios" data-k="horarios"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Horários</a>
+    <a class="nl" href="#/paradas" data-k="paradas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Paradas</a>
     <a class="nl" href="#/avisos" data-k="avisos"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a3 3 0 0 1 0 6"/></svg>Avisos</a>
     <a class="nl" href="#/publicacao" data-k="publicacao"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Publicação <span class="badge" id="sideBadge" style="display:none"></span></a>
     <a class="nl" href="../desktop/" target="_blank"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Ver site do passageiro</a>
@@ -213,7 +221,9 @@ tr:hover .sc .ops{opacity:1}
 <div class="modal-bg" id="modalBg" onmousedown="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
 <div class="toasts" id="toasts"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="../desktop/dados.js"></script>
+<script src="../desktop/geo.js"></script>
 <script src="../desktop/db.js"></script>
 <script>
 /* ================= UTIL ================= */
@@ -289,7 +299,8 @@ function route(){
   if(!ss.get('fronteira:adm'))return;
   const p=(location.hash||'#/painel').slice(2).split('/').map(decodeURIComponent);
   document.querySelectorAll('.side a.nl').forEach(a=>a.classList.toggle('on',a.dataset.k===p[0]||(p[0]==='linha'&&a.dataset.k==='linhas')));
-  ({painel:vPainel,linhas:vLinhas,linha:vLinha,horarios:vHorarios,avisos:vAvisos,publicacao:vPub}[p[0]]||vPainel)(p.slice(1));
+  if(window._pmap){window._pmap.remove();window._pmap=null}
+  ({painel:vPainel,tempo:vTempoReal,linhas:vLinhas,linha:vLinha,horarios:vHorarios,paradas:vParadas,avisos:vAvisos,publicacao:vPub}[p[0]]||vPainel)(p.slice(1));
   updBar();
 }
 const view=h=>{$('#view').innerHTML=h};
@@ -328,6 +339,7 @@ function vPainel(){
       <div class="bars">${hrs.map(x=>`<div class="b"><s>${x.n||''}</s><i style="height:${x.n/mx*100}%"></i><em>${x.h}h</em></div>`).join('')}</div>
     </div>
     <div class="card"><div class="card-h"><h2>Pendências</h2><span class="tag ${semH.length+inv.length?'t-sel':'t-ativa'}">${semH.length+inv.length}</span></div>
+      ${(()=>{const n=stopsInUse().filter(s=>!precOk((W.paradas||{})[s])).length;return n?`<a class="row" style="padding:9px 0;border-bottom:1px solid var(--line)" href="#/paradas"><span class="tag t-sel">${n}</span><span style="flex:1;font-weight:600">Paradas com posição a confirmar</span><span class="small muted">mapa</span></a>`:''})()}
       ${inv.map(x=>`<a class="row" style="padding:9px 0;border-bottom:1px solid var(--line)" href="#/horarios/${x.l.id}" onclick="E={id:'${x.l.id}',b:${x.bi},d:${x.di}}"><span class="tag t-red">${x.c} erro(s)</span><span style="flex:1;font-weight:600">${esc(x.l.nome)}</span><span class="small muted">${esc(x.d.dir)}</span></a>`).join('')}
       ${semH.map(l=>`<a class="row" style="padding:9px 0;border-bottom:1px solid var(--line)" href="#/horarios/${l.id}">${codeBox(l)}<span style="flex:1;font-weight:600">${esc(l.nome)}</span><span class="small muted">sem horário</span></a>`).join('')||'<div class="empty small">Nenhuma pendência.</div>'}
     </div>
@@ -463,8 +475,9 @@ function vHorarios([id]){
       <span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:3px;background:var(--red-bg);border:1px solid #FCA5A5"></i>Horário inválido ou antes da parada anterior</span>
       <span>↑ ↓ Enter: navegar</span>
     </div>`:'<div class="empty">Crie um sentido para começar.</div>'}
-  </div>`}`);
-  if(Dr)renderTable();
+  </div>
+  ${Dr?'<div class="card" id="tempoCard"></div>':''}`}`);
+  if(Dr){renderTable();renderTempos()}
 }
 const curH=()=>W.horarios[E.id];
 const curB=()=>curH()[E.b];
@@ -540,7 +553,7 @@ function addDir(){
   const nd=src?{dir:src.dir.includes('→')?src.dir.split('→').map(s=>s.trim()).reverse().join(' → '):'Volta',rows:[...src.rows].reverse().map(r=>[r[0]])}:{dir:'Ida',rows:[]};
   B.dirs.push(nd);E.d=B.dirs.length-1;mark(`Sentido "${nd.dir}" criado em ${LINE(E.id).nome}`);toast('Sentido criado',src?'Paradas copiadas em ordem inversa. Agora preencha os horários.':'');route();
 }
-function renameDir(v){curD().dir=v.trim()||'Sentido';mark(`Sentido renomeado em ${LINE(E.id).nome}`);route()}
+function renameDir(v){const ant=E.id+'::'+curD().dir;curD().dir=v.trim()||'Sentido';const nov=E.id+'::'+curD().dir;['tempos','rotas'].forEach(k=>{if(W[k]&&W[k][ant]&&ant!==nov){W[k][nov]=W[k][ant];delete W[k][ant]}});mark(`Sentido renomeado em ${LINE(E.id).nome}`);route()}
 function delDir(){const d=curD();confirmBox('Excluir sentido?',`O sentido <b>${esc(d.dir)}</b> e todas as viagens dele serão removidos.`,'Excluir sentido',()=>{curB().dirs.splice(E.d,1);E.d=0;mark(`Sentido "${d.dir}" excluído de ${LINE(E.id).nome}`);route()})}
 
 /* ================= AVISOS ================= */
@@ -601,6 +614,7 @@ function vPub(){
     <div class="row wrap">
       <button class="btn ghost" onclick="download('fronteira-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB.load(),null,2),'application/json')">Baixar backup (.json)</button>
       <button class="btn ghost" onclick="download('dados.js',buildDadosJs(DB.load()),'text/javascript')">Gerar dados.js</button>
+      <button class="btn ghost" onclick="download('geo.js',buildGeoJs(DB.load()),'text/javascript')">Gerar geo.js (paradas, trajetos e tempos)</button>
       <label class="btn ghost" style="cursor:pointer">Importar backup<input type="file" accept=".json,application/json" style="display:none" onchange="importJson(this)"></label>
       <button class="btn ghost" onclick="exportCsv()">Horários em planilha (.csv)</button>
     </div></div>
@@ -624,6 +638,138 @@ function exportCsv(){
   const d=DB.load();const out=['linha;tabela;sentido;parada;horarios'];
   d.linhas.forEach(l=>(d.horarios[l.id]||[]).forEach(b=>b.dirs.forEach(dir=>dir.rows.forEach(r=>out.push([l.nome,b.day,dir.dir,r[0],r.slice(1).map(x=>x||'—').join(' ')].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';'))))));
   download('horarios-fronteira.csv','﻿'+out.join('\r\n'),'text/csv');
+}
+
+/* ================= TEMPO DE PERCURSO POR HORÁRIO ================= */
+function tempoKey(){return E.id+'::'+curD().dir}
+function renderTempos(){
+  const el=$('#tempoCard');if(!el)return;
+  const D=curD();const n=D.rows.length;if(n<2){el.style.display='none';return}
+  el.style.display='';
+  const T=(W.tempos||(W.tempos={}))[tempoKey()]||{};
+  const nt=tripCount(D.rows);const media=[];
+  for(let i=0;i<n-1;i++){const ds=[];for(let j=0;j<nt;j++){const a=toMin(D.rows[i][j+1]),b=toMin(D.rows[i+1][j+1]);if(a!=null&&b!=null)ds.push(b-a)}media.push(ds.length?Math.round(ds.reduce((x,y)=>x+y,0)/ds.length*10)/10:null)}
+  el.innerHTML=`<div class="card-h"><div><h2>Tempo de percurso por horário</h2><div class="small muted" style="max-width:720px;margin-top:2px">Quanto cada trecho costuma levar <b>a mais</b> (ou a menos, com sinal −) em cada faixa do dia. O site soma esses minutos à tabela e mostra a previsão como <b>ajustada</b>.</div></div></div>
+  <div class="edwrap"><table class="list"><thead><tr><th>Trecho</th><th style="text-align:right">Na tabela</th>${DB.BANDAS.map(b=>`<th style="text-align:center">${b.nome}<div style="font-weight:500;text-transform:none;letter-spacing:0" class="mono">${fmt(b.de)}–${b.ate>=1440?'24:00':fmt(b.ate)}</div></th>`).join('')}</tr></thead>
+  <tbody>${D.rows.slice(0,-1).map((r,i)=>`<tr><td><b>${esc(r[0])}</b> → ${esc(D.rows[i+1][0])}</td><td class="mono" style="text-align:right">${media[i]!=null?media[i]+' min':'—'}</td>${DB.BANDAS.map(b=>{const v=(T[b.id]||[])[i]||0;return `<td style="text-align:center"><input class="inp mono tin ${v?'on':''}" type="number" step="1" min="-15" max="45" value="${v||''}" placeholder="0" aria-label="Minutos a mais de ${esc(r[0])} no ${b.nome}" onchange="setTempo('${b.id}',${i},this)"></td>`}).join('')}</tr>`).join('')}</tbody></table></div>
+  <p class="small muted" style="margin-top:10px">Exemplo: se no pico da manhã o trecho Terminal → Nacional leva 4 min em vez de 2, digite <b>2</b> naquela célula. As paradas seguintes também ficam 2 min mais tarde.</p>`;
+}
+function setTempo(b,i,el){
+  const v=Math.max(-15,Math.min(45,parseInt(el.value,10)||0));el.value=v||'';el.classList.toggle('on',!!v);
+  const k=tempoKey();const T=(W.tempos[k]=W.tempos[k]||{});const n=curD().rows.length-1;
+  T[b]=(T[b]||[]).slice(0,n);while(T[b].length<n)T[b].push(0);T[b][i]=v;
+  mark(`Tempo de percurso de ${LINE(E.id).nome} (${curD().dir}) ajustado`);
+}
+
+/* ================= TEMPO REAL ================= */
+let RT_TIMER=null;
+// viagens do dia com a mesma numeração usada pelo site do passageiro (dados publicados)
+function adminTrips(dow){
+  const pub=DB.load();const out=[];
+  pub.linhas.forEach(l=>{if(l.status==='suspensa')return;
+    const blocks=(pub.horarios[l.id]||[]).map(b=>({b,dirs:b.dirs.filter(d=>d.rows.length&&tripCount(d.rows)>0&&d.rows.some(r=>r.slice(1).some(x=>toMin(x)!=null)))})).filter(x=>x.dirs.length);
+    blocks.forEach((x,bi)=>{if(!(x.b.days||[]).includes(dow))return;
+      x.dirs.forEach((d,di)=>{const n=tripCount(d.rows);for(let j=0;j<n;j++){const ts=d.rows.map(r=>toMin(r[j+1]));const v=ts.filter(t=>t!=null);if(!v.length)continue;
+        out.push({l,bi,di,d,j,ts,start:Math.min(...v),end:Math.max(...v),key:l.id+'|'+bi+'|'+di+'|'+j})}})})});
+  return out;
+}
+const DIAS_L=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function vTempoReal(){
+  view(`<div class="page-h"><div><div class="crumb">Operação</div><h1>Tempo real</h1></div><div class="small muted" id="rtClock"></div></div>
+  <div class="card" style="margin-bottom:18px"><p class="small muted" style="line-height:1.6;max-width:820px">Informe atrasos e cancelamentos das viagens de hoje. <b>Vale na hora</b>, sem precisar publicar: o site passa a mostrar a viagem como <b>ao vivo</b> e corrige as previsões das paradas seguintes. Os relatos de passageiros ("o ônibus passou agora") aparecem no fim da página para conferência.</p></div>
+  <div class="card"><div class="card-h"><h2>Viagens agora</h2><span class="small muted">em trânsito, saindo em até 30 min ou encerradas há até 15 min</span></div><div id="rtList"></div></div>
+  <div class="card"><div class="card-h"><h2>Relatos de passageiros</h2></div><div id="rtRel"></div></div>`);
+  renderRT();clearInterval(RT_TIMER);
+  RT_TIMER=setInterval(()=>{if(!location.hash.startsWith('#/tempo')){clearInterval(RT_TIMER);return}if(!$('#modalBg').classList.contains('open'))renderRT()},3000);
+}
+function renderRT(){
+  if(!$('#rtList'))return;
+  const n=DB.now();const live=DB.loadLive(n);const m=n.min;
+  $('#rtClock').innerHTML=`${DIAS_L[n.dow]}, <b class="mono">${fmt(Math.floor(m))}</b>${n.sim?' · relógio do modo demonstração':''}`;
+  const todas=adminTrips(n.dow);
+  const trips=todas.filter(t=>{const lv=live[t.key];const d=lv&&!lv.cancel?lv.delay:0;return t.end+d>=m-15&&t.start<=m+30}).sort((a,b)=>{const r=t=>{const lv=live[t.key];const d=lv&&!lv.cancel?lv.delay:0;return t.start+d<=m&&t.end+d>=m?0:t.start+d>m?1:2};return r(a)-r(b)||a.start-b.start});
+  $('#rtList').innerHTML=trips.length?`<table class="list"><thead><tr><th>Linha e sentido</th><th>Viagem</th><th>Situação</th><th>Informação ao vivo</th><th style="text-align:right">Ajustar</th></tr></thead><tbody>${trips.map(t=>{const lv=live[t.key];const d=lv&&!lv.cancel?lv.delay:0;
+      const sit=lv&&lv.cancel?'cancelada':t.start+d>m?`sai em ${Math.round(t.start+d-m)} min`:t.end+d<m?'encerrada':'em trânsito';
+      const info=!lv?'<span class="small muted">nenhuma (o site usa a tabela)</span>':lv.cancel?'<span class="tag t-red">Cancelada</span>':`<span class="tag ${lv.delay>2?'t-sel':'t-ativa'}">${lv.delay>0?'+'+lv.delay+' min':lv.delay<0?lv.delay+' min':'no horário'}</span> <span class="small muted">${lv.src==='passageiro'?'relato de passageiro':'empresa'} · há ${Math.max(0,Math.round(m-lv.min))} min</span>`;
+      return `<tr><td><div class="row">${codeBox(t.l)}<span style="font-weight:600">${esc(t.d.dir)}</span></div></td><td class="mono">${fmt(t.start)} → ${fmt(t.end)}</td><td>${sit}</td><td>${info}</td>
+      <td><div class="row" style="justify-content:flex-end;gap:4px;flex-wrap:wrap">${lv&&lv.cancel?`<button class="btn ghost sm" onclick="rtClear('${t.key}')">Desfazer cancelamento</button>`:`<button class="btn ghost sm" title="1 min mais cedo" onclick="rtDelay('${t.key}',-1)">−1</button><button class="btn ghost sm" title="1 min de atraso" onclick="rtDelay('${t.key}',1)">+1</button><button class="btn ghost sm" title="5 min de atraso" onclick="rtDelay('${t.key}',5)">+5</button><button class="btn ghost sm" onclick="rtSet('${t.key}',0)">No horário</button><button class="btn danger sm" onclick="rtCancel('${t.key}')">Cancelar</button>`}${lv&&!lv.cancel?`<button class="iconbtn" title="Remover informação" onclick="rtClear('${t.key}')">${ICO.x}</button>`:''}</div></td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Nenhuma viagem em andamento ou saindo nos próximos 30 min.</div>';
+  const rel=Object.entries(live).filter(([k,v])=>v.src==='passageiro');
+  $('#rtRel').innerHTML=rel.length?rel.map(([k,v])=>{const t=todas.find(x=>x.key===k);if(!t)return'';return `<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)">${codeBox(t.l)}<div style="flex:1;min-width:0"><b>${esc(t.d.dir)}</b> · saída <span class="mono">${fmt(t.start)}</span><div class="small muted">Passageiro viu passar em ${esc(t.d.rows[v.from]?t.d.rows[v.from][0]:'')}: ${v.delay>0?v.delay+' min atrasado':v.delay<0?(-v.delay)+' min adiantado':'no horário'} · há ${Math.max(0,Math.round(m-v.min))} min</div></div><button class="btn ghost sm" onclick="rtConfirm('${k}')">Confirmar</button><button class="btn danger sm" onclick="rtClear('${k}')">Descartar</button></div>`}).join(''):'<div class="empty small">Nenhum relato hoje.</div>';
+}
+const rtGet=k=>DB.loadLive(DB.now())[k];
+function rtSet(k,delay){const lv=rtGet(k);DB.setLive(k,{delay,from:lv&&lv.from||0,src:'empresa',min:DB.now().min},DB.now());renderRT()}
+function rtDelay(k,d){const lv=rtGet(k);rtSet(k,(lv&&!lv.cancel?lv.delay:0)+d)}
+function rtCancel(k){confirmBox('Cancelar viagem?','O site vai mostrar a viagem como <b>cancelada</b>, e ela deixa de aparecer como próxima saída.','Cancelar viagem',()=>{DB.setLive(k,{cancel:true,src:'empresa',min:DB.now().min},DB.now());toast('Viagem cancelada','O site do passageiro já mostra.');renderRT()})}
+function rtClear(k){DB.setLive(k,null,DB.now());renderRT()}
+function rtConfirm(k){const lv=rtGet(k);if(!lv)return;DB.setLive(k,{...lv,src:'empresa',min:DB.now().min},DB.now());toast('Relato confirmado','Agora aparece como informado pela empresa.');renderRT()}
+
+/* ================= PARADAS ================= */
+let PQ='',PF='conf',PSEL=null;const CHG=new Set();
+const PREC={ponto:'Local exato no mapa',conferida:'Conferida pela empresa',aproximada:'Aproximada (centro do bairro ou da rua)',estimada:'Estimada (não encontrada no mapa)'};
+const precOk=p=>p&&(p.prec==='ponto'||p.prec==='conferida');
+const precTag=p=>p.prec==='ponto'?'<span class="tag t-ativa">Exata</span>':p.prec==='conferida'?'<span class="tag t-ativa">Conferida</span>':p.prec==='aproximada'?'<span class="tag t-urb">Aproximada</span>':'<span class="tag t-sel">Estimada</span>';
+function stopsInUse(){const s=new Set();Object.values(W.horarios).forEach(H=>H.forEach(b=>b.dirs.forEach(d=>d.rows.forEach(r=>s.add(String(r[0]).replace(/\s*↩$/,'').trim())))));return [...s].sort((a,b)=>a.localeCompare(b,'pt'))}
+function affectedDirs(){const out=[];W.linhas.forEach(l=>(W.horarios[l.id]||[]).forEach(b=>b.dirs.forEach(d=>{const k=l.id+'::'+d.dir;if(out.some(x=>x.k===k))return;const st=d.rows.map(r=>String(r[0]).replace(/\s*↩$/,'').trim());if(st.length>1&&st.some(s=>CHG.has(s)))out.push({k,st})})));return out}
+function pIcon(prec){const ok=prec==='ponto'||prec==='conferida';const c=ok?'#002460':prec==='aproximada'?'#4A6FA5':'#B7791F';
+  return L.divIcon({className:'',html:`<div style="width:18px;height:18px;border-radius:50%;background:${ok?c:'#fff'};border:3px ${ok?'solid':'dashed'} ${c};box-shadow:0 1px 3px rgba(0,0,0,.35)"></div>`,iconSize:[18,18],iconAnchor:[9,9]})}
+function vParadas(){
+  if(window._pmap){window._pmap.remove();window._pmap=null}
+  const all=stopsInUse();W.paradas=W.paradas||{};W.rotas=W.rotas||{};
+  const conf=all.filter(s=>!precOk(W.paradas[s])).length;
+  view(`<div class="page-h"><div><div class="crumb">Cadastro</div><h1>Paradas</h1></div>
+    <button class="btn" id="recalcBtn" onclick="recalcRotas()"></button></div>
+  <div class="card" style="margin-bottom:18px"><p class="small muted" style="line-height:1.6;max-width:860px">${all.length} paradas · <b>${conf} com posição a confirmar</b>, porque não foram encontradas com exatidão no OpenStreetMap. <b>Arraste o marcador</b> até o local certo da parada (ela passa a "conferida") ou clique em <b>Confirmar</b> se já estiver certa. Depois, clique em <b>Recalcular trajetos</b> para refazer o caminho pelas ruas e publique.</p>
+    <div class="row wrap small muted" style="margin-top:10px;gap:16px"><span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:50%;background:#002460"></i>Exata ou conferida</span><span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:50%;border:2px dashed #4A6FA5"></i>Aproximada</span><span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:50%;border:2px dashed #B7791F"></i>Estimada</span></div></div>
+  <div class="grid" style="grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)">
+    <div class="card" style="padding:0;overflow:hidden"><div id="pmap" style="height:620px"></div></div>
+    <div class="card" style="padding:0;align-self:start">
+      <div style="padding:14px 16px;border-bottom:1px solid var(--line)"><input class="inp" style="width:100%" placeholder="Buscar parada" value="${esc(PQ)}" oninput="PQ=this.value;renderPList()">
+      <div class="row wrap" style="margin-top:10px;gap:6px">${[['conf','A confirmar'],['ok','Exatas e conferidas'],['todas','Todas']].map(([k,t])=>`<button class="chip ${PF===k?'on':''}" onclick="PF='${k}';renderPList();document.querySelectorAll('[data-pf]').forEach(b=>b.classList.toggle('on',b.dataset.pf===PF))" data-pf="${k}">${t}</button>`).join('')}</div></div>
+      <div id="plist" style="max-height:530px;overflow:auto"></div>
+    </div>
+  </div>`);
+  refreshRecalc();
+  if(!window.L){$('#pmap').innerHTML='<div class="empty">O mapa precisa de internet para carregar.</div>';renderPList();return}
+  const map=L.map('pmap');window._pmap=map;
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+  window._pmk={};const pts=[];
+  all.forEach(s=>{const p=W.paradas[s];if(!p)return;pts.push([p.lat,p.lng]);
+    const mm=L.marker([p.lat,p.lng],{draggable:true,icon:pIcon(p.prec),title:s}).addTo(map).bindTooltip(esc(s));
+    mm.on('dragend',e=>{const ll=e.target.getLatLng();W.paradas[s]={lat:+ll.lat.toFixed(5),lng:+ll.lng.toFixed(5),prec:'conferida'};CHG.add(s);mm.setIcon(pIcon('conferida'));mark(`Posição da parada ${s} ajustada`);PSEL=s;renderPList();refreshRecalc()});
+    mm.on('click',()=>{PSEL=s;renderPList()});
+    window._pmk[s]=mm});
+  if(pts.length)map.fitBounds(pts,{padding:[30,30]});
+  renderPList();
+}
+function refreshRecalc(){const b=$('#recalcBtn');if(!b)return;const n=affectedDirs().length;b.disabled=!n;b.className='btn'+(n?'':' ghost');b.textContent=n?`Recalcular trajetos (${n} ${n>1?'sentidos':'sentido'})`:'Trajetos em dia'}
+function renderPList(){
+  const el=$('#plist');if(!el)return;
+  const q=DB.slug(PQ);
+  const list=stopsInUse().filter(s=>{const ok=precOk(W.paradas[s]);return (PF==='todas'||(PF==='conf'&&!ok)||(PF==='ok'&&ok))&&(!q||DB.slug(s).includes(q))});
+  el.innerHTML=list.map(s=>{const p=W.paradas[s];const sq=s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return `<div class="row" style="padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;${PSEL===s?'background:var(--navy-25)':''}" onclick="selParada('${esc(sq)}')"><div style="flex:1;min-width:0"><div style="font-weight:600">${esc(s)}</div><div class="small muted">${p?PREC[p.prec]||'':'Sem posição'}</div></div>${p?precTag(p):''}${PSEL===s&&p&&!precOk(p)?`<button class="btn sm" onclick="event.stopPropagation();confParada('${esc(sq)}')">Confirmar</button>`:''}</div>`}).join('')||'<div class="empty">Nenhuma parada neste filtro.</div>';
+}
+function selParada(s){PSEL=s;const mm=window._pmk&&window._pmk[s];if(mm&&window._pmap){window._pmap.setView(mm.getLatLng(),17);mm.openTooltip()}renderPList()}
+function confParada(s){const p=W.paradas[s];if(!p)return;p.prec='conferida';if(window._pmk&&window._pmk[s])window._pmk[s].setIcon(pIcon('conferida'));mark(`Posição da parada ${s} confirmada`);renderPList()}
+async function recalcRotas(){
+  const dirs=affectedDirs();if(!dirs.length)return;
+  const b=$('#recalcBtn');b.disabled=true;
+  let ok=0,i=0;
+  for(const {k,st} of dirs){i++;b.textContent=`Recalculando ${i} de ${dirs.length}…`;
+    const pts=st.map(s=>W.paradas[s]);if(pts.some(p=>!p))continue;
+    try{
+      const url='https://router.project-osrm.org/route/v1/driving/'+pts.map(p=>p.lng+','+p.lat).join(';')+'?overview=false&steps=true&geometries=geojson';
+      const j=await (await fetch(url)).json();if(j.code!=='Ok')throw new Error(j.code);
+      W.rotas[k]=j.routes[0].legs.map(leg=>{const seg=[];leg.steps.forEach(stp=>stp.geometry.coordinates.forEach(([lng,lat])=>{const p=[+lat.toFixed(5),+lng.toFixed(5)];const q=seg[seg.length-1];if(!q||q[0]!==p[0]||q[1]!==p[1])seg.push(p)}));return seg});ok++;
+    }catch(e){}
+    await new Promise(r=>setTimeout(r,1100)); // respeita o limite do serviço de rotas
+  }
+  if(ok===dirs.length)CHG.clear();
+  mark(`Trajetos recalculados (${ok} ${ok>1?'sentidos':'sentido'})`);
+  ok===dirs.length?toast('Trajetos recalculados',`${ok} ${ok>1?'sentidos':'sentido'}. Publique para valer no site.`):toast('Alguns trajetos não foram recalculados',`${ok} de ${dirs.length}. Verifique a internet e tente de novo.`,true);
+  refreshRecalc();
+}
+function buildGeoJs(d){
+  return `// Gerado pela Área da Empresa em ${new Date().toLocaleString('pt-BR')}\nwindow.PARADAS = ${JSON.stringify(d.paradas||{})};\nwindow.ROTAS = ${JSON.stringify(d.rotas||{})};\nwindow.TEMPOS = ${JSON.stringify(d.tempos||{})};\n`;
 }
 
 window.addEventListener('storage',e=>{if(e.key===DB.KEY&&!PEND.length){W=clone(DB.load());route()}});

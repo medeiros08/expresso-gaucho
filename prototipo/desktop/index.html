@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <title>Fronteira Transportes · Linhas e Horários</title>
 <style>
 :root{
@@ -240,6 +241,38 @@ td.colsel{background:var(--brand-tint)}
 footer{border-top:1px solid var(--line);color:var(--ink-2);font-size:13px;padding:18px 0}
 footer a{color:var(--brand)}
 .tabbar{display:none}
+/* origem da previsão */
+.src{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--ink-2);white-space:nowrap}
+.src i{width:6px;height:6px;border-radius:50%;background:var(--ink-3);flex-shrink:0}
+.src.adj{color:var(--brand)}.src.adj i{background:var(--brand)}
+.src.live{color:var(--ok);font-weight:600}.src.live i{background:var(--ok)}
+.src.late{color:var(--warn);font-weight:600}.src.late i{background:var(--warn)}
+.src.off{color:#9B2C1C;font-weight:600}.src.off i{background:#9B2C1C}
+.nextBox .src,#nextBox .src{white-space:normal}
+.sched{font-size:12px;color:var(--ink-3);text-decoration:line-through;margin-right:5px}
+.dep.cancel .to,.when.cx b{text-decoration:line-through;color:var(--ink-3)}
+.tm.lv{position:relative}.tm.lv:after{content:"";position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.tm.on.lv:after{background:#7FE0A8}
+.tm.cx{text-decoration:line-through;color:var(--ink-3)}
+.report{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-2)}
+.howrow{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:10px 0;border-top:1px solid var(--line);align-items:start}
+.howrow p{font-size:14px;color:var(--ink-2)}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
+/* mapa da cidade */
+#leaf{height:520px;background:#ECEAE3}
+.leaflet-container{font-family:var(--font)}
+.leaflet-tile-pane{filter:saturate(.35) contrast(.95) brightness(1.03)}
+.bicon{background:none;border:none}
+.bmk{width:30px;height:30px;border-radius:6px;display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.bmk.live{background:var(--ok);color:#fff;border:2.5px solid #fff}
+.bmk.est{background:#fff;color:var(--brand);border:2.5px dashed var(--brand)}
+.bmk.sm{width:26px;height:26px;flex-shrink:0;box-shadow:none}
+.blbl{position:absolute;left:30px;top:-18px;background:var(--ink);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;border-radius:4px;padding:1px 6px;white-space:nowrap}
+.maplegend{display:flex;gap:8px 18px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.maplegend span{display:inline-flex;align-items:center;gap:6px}
+.lg-bus{display:inline-block;width:14px;height:14px;border-radius:3px}
+.lg-bus.live{background:var(--ok)}.lg-bus.est{background:#fff;border:2px dashed var(--brand)}
+.lg-stop{display:inline-block;width:11px;height:11px;border-radius:50%;background:#fff;border:2px dashed var(--brand)}
 @media (display-mode:standalone){.nbtn.install{display:none!important}}
 @media (max-width:1100px){.nav-links a{padding:0 9px}.nbtn.emp span{display:none}}
 @media (max-width:900px){
@@ -267,6 +300,8 @@ footer a{color:var(--brand)}
   .trip .tt{grid-column:2;grid-row:2;font-size:17px}
   .trip .when{grid-row:1 / span 2;grid-column:3}
   .nextdep .big{font-size:44px}
+  #leaf{height:380px}
+  .howrow{grid-template-columns:1fr;gap:4px}
   .dep,.li,.stop{padding-left:14px;padding-right:14px}
   .stop:before{left:24px}
   footer{display:none}
@@ -332,16 +367,19 @@ footer a{color:var(--brand)}
 <nav class="tabbar" id="tabbar" aria-label="Navegação"><a href="#/inicio" data-k="inicio"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Saídas</a><a href="#/linhas" data-k="linhas"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</a><a href="#/planejar" data-k="planejar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></svg>Como chegar</a><a href="#/mapa" data-k="mapa"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>Mapa</a><a href="#/favoritos" data-k="favoritos"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Favoritos</a></nav>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="dados.js"></script>
+<script src="geo.js"></script>
 <script src="db.js"></script>
 <script>
 /* ================= UTIL ================= */
 const $=s=>document.querySelector(s);
 const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
 const toMin=t=>{if(!t)return null;const r=/^(\d{1,2}):(\d{2})$/.exec(String(t).trim());return r?+r[1]*60+ +r[2]:null};
-const fmt=m=>{m=Math.floor(m);const h=Math.floor(m/60)%24,mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0')};
+const fmt=m=>{m=Math.floor(((m%1440)+1440)%1440);const h=Math.floor(m/60),mm=m%60;return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0')};
 const slug=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jsq=s=>esc(s).replace(/'/g,"\\'");
 const normStop=s=>s.replace(/\s*↩$/,'').trim();
 const ICON={
  search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5F5E58" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
@@ -349,9 +387,10 @@ const ICON={
  map:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>',
  swap:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 4v16M7 4 3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg>',
  trash:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+ bus:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>',
 };
 
-/* ================= DATA MODEL ================= */
+/* ================= DADOS ================= */
 const DBD=DB.load();
 const LINES=DBD.linhas.map(l=>{
   const blocks=(DBD.horarios[l.id]||[]).map(b=>({label:b.day,days:b.days&&b.days.length?b.days:dayTypes(b.day),dirs:b.dirs.map(d=>buildDir(d)).filter(d=>d.stops.length&&d.trips.length)})).filter(b=>b.dirs.length);
@@ -387,25 +426,73 @@ const ALLSTOPS=[...new Set(LINES.flatMap(l=>l.blocks.flatMap(b=>b.dirs.flatMap(d
 const activeBlocks=(l,dow)=>l.susp?[]:l.blocks.filter(b=>b.days.includes(dow));
 const destOf=name=>{const p=name.split('→');return p.length>1?p[p.length-1].trim():name};
 
-/* ================= STATE ================= */
+/* ================= ESTADO ================= */
 const store={get(k,d){try{const v=localStorage.getItem('fronteira:'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('fronteira:'+k,JSON.stringify(v))}catch(e){}}};
 const S={
   fav:new Set(store.get('fav',['ibirapuita-polivalente'])),
   alerts:store.get('alerts',[]),
   myStop:store.get('myStop','Terminal'),
   sim:store.get('sim',{on:true,dow:2,min:10*60+28,speed:1}),
+  mapMode:store.get('mapMode','cidade'),
   filter:'todas',q:'',
   det:{block:0,dir:0,stop:0,trip:null,table:false},
   map:{line:'ibirapuita-polivalente',block:0,dir:0},
   plan:{o:'Unipampa',d:'Terminal'}
 };
-const save=()=>{store.set('fav',[...S.fav]);store.set('alerts',S.alerts);store.set('myStop',S.myStop);store.set('sim',S.sim)};
+const save=()=>{store.set('fav',[...S.fav]);store.set('alerts',S.alerts);store.set('myStop',S.myStop);store.set('sim',S.sim);store.set('mapMode',S.mapMode)};
 function NOW(){
   if(S.sim.on)return{dow:S.sim.dow,min:S.sim.min};
   const d=new Date();return{dow:d.getDay(),min:d.getHours()*60+d.getMinutes()+d.getSeconds()/60};
 }
+const NOWK=()=>({...NOW(),sim:S.sim.on});
 
-/* ================= CLOCK / SIM ================= */
+/* ================= PREVISÃO =================
+   A posição e o horário previsto de cada viagem juntam três fontes, da mais fraca para a mais forte:
+   1. Tabela oficial.
+   2. Ajuste por faixa de horário, definido pela empresa (ex.: no pico da manhã o trecho X leva +2 min).
+   3. Informação ao vivo do dia: atraso/cancelamento informado pela empresa ou relato de passageiro
+      ("o ônibus passou agora"), que corrige as paradas seguintes daquela viagem.
+   Só a fonte 3 é mostrada como "ao vivo". */
+let LIVEDATA=DB.loadLive(NOWK());
+const PCACHE=new Map();
+const tripKey=(l,bi,di,t)=>l.id+'|'+bi+'|'+di+'|'+t.idx;
+const dirKey=(l,D)=>l.id+'::'+D.name;
+function predict(l,bi,di,t,semAoVivo){
+  const D=l.blocks[bi].dirs[di];
+  let times=t.times.slice(),src='tabela',band=DB.banda(t.start);
+  const adj=(DBD.tempos||{})[dirKey(l,D)];const arr=adj&&adj[band.id];
+  if(arr&&arr.some(x=>+x)){let acc=0;times=times.map((v,i)=>{if(i>0)acc+=+(arr[i-1]||0);return v==null?null:v+acc});src='historico'}
+  const base=times.slice();
+  let delay=0,ago=null,cancel=false,from=0;
+  const lv=semAoVivo?null:LIVEDATA[tripKey(l,bi,di,t)];
+  if(lv){ago=Math.max(0,Math.round(NOW().min-lv.min));
+    if(lv.cancel){cancel=true;src='cancelada'}
+    else{delay=Math.round(lv.delay||0);from=lv.from||0;times=times.map((v,i)=>v==null||i<from?v:v+delay);src=lv.src}}
+  const valid=times.filter(v=>v!=null);
+  return {times,base,raw:t.times,start:Math.min(...valid),end:Math.max(...valid),src,band,delay,ago,cancel,from};
+}
+function P(l,bi,di,t){const k=tripKey(l,bi,di,t);let p=PCACHE.get(k);if(!p){p=predict(l,bi,di,t);PCACHE.set(k,p)}return p}
+const isLive=p=>p.src==='empresa'||p.src==='passageiro';
+function srcLabel(p){
+  if(p.cancel)return `<span class="src off"><i></i>Viagem cancelada pela empresa</span>`;
+  if(isLive(p)){
+    const st=p.delay>0?`${p.delay} min atrasado`:p.delay<0?`${-p.delay} min adiantado`:'no horário';
+    const quem=p.src==='empresa'?'informado pela empresa':'relato de passageiro';
+    return `<span class="src ${p.delay>2?'late':'live'}"><i></i>Ao vivo: ${st} · ${quem}, ${p.ago<1?'agora mesmo':'há '+p.ago+' min'}</span>`;
+  }
+  if(p.src==='historico')return `<span class="src adj"><i></i>Previsto pela tabela, ajustado para o horário (${p.band.nome.toLowerCase()})</span>`;
+  return `<span class="src"><i></i>Previsto pela tabela</span>`;
+}
+function srcShort(p){
+  if(p.cancel)return `<span class="src off"><i></i>cancelada</span>`;
+  if(isLive(p))return `<span class="src ${p.delay>2?'late':'live'}"><i></i>ao vivo${p.delay>0?' · +'+p.delay+' min':p.delay<0?' · '+p.delay+' min':' · no horário'}</span>`;
+  if(p.src==='historico')return `<span class="src adj"><i></i>ajustado</span>`;
+  return `<span class="src"><i></i>tabela</span>`;
+}
+// percorre as viagens das tabelas que valem no dia
+function eachTrip(l,dow,fn){activeBlocks(l,dow).forEach(b=>{const bi=l.blocks.indexOf(b);b.dirs.forEach((d,di)=>d.trips.forEach(t=>fn(b,bi,d,di,t,P(l,bi,di,t))))})}
+
+/* ================= RELÓGIO / DEMO ================= */
 function renderClock(){
   const n=NOW();
   $('#clock').innerHTML=`<span class="wd">${DIAS[n.dow].slice(0,3)} </span>${fmt(n.min)}${S.sim.on?' <span class="demo">DEMO</span>':''}`;
@@ -422,53 +509,53 @@ function toggleSim(){S.sim.on=!S.sim.on;save();renderClock();route()}
 function setSim(){const [h,m]=$('#simTime').value.split(':').map(Number);S.sim.dow=+$('#simDay').value;if(!isNaN(h))S.sim.min=h*60+m;save();renderClock();route()}
 function setSpeed(s){S.sim.speed=s;save();renderClock()}
 
-/* ================= QUERIES ================= */
-// próximas passagens numa parada (todas as linhas)
+/* ================= CONSULTAS ================= */
+// próximas passagens numa parada (todas as linhas), já com a previsão
 function arrivalsAt(stop,n,horizon=180){
   const {dow,min}=NOW();const out=[];
-  LINES.forEach(l=>activeBlocks(l,dow).forEach(b=>b.dirs.forEach((d,di)=>{
-    d.stops.forEach((s,si)=>{if(s!==stop)return;
-      d.trips.forEach(t=>{const tm=t.times[si];if(tm==null||tm<min-0.5||tm-min>horizon)return;
-        if(!t.times.some((x,k)=>k>si&&x!=null))return; // a viagem termina aqui: não serve para embarcar
-        out.push({l,b,d,di,bi:l.blocks.indexOf(b),t:tm,trip:t,si});});
-    });
-  })));
+  LINES.forEach(l=>eachTrip(l,dow,(b,bi,d,di,t,p)=>{
+    const si=d.stops.indexOf(stop);if(si<0)return;
+    const tm=p.times[si];if(tm==null||tm<min-0.5||tm-min>horizon)return;
+    if(!p.times.some((x,k)=>k>si&&x!=null))return; // a viagem termina aqui: não serve para embarcar
+    out.push({l,b,d,di,bi,t:tm,trip:t,si,p});
+  }));
   return out.sort((a,b)=>a.t-b.t).slice(0,n);
 }
 function nextDeparture(l){
   const {dow,min}=NOW();let best=null;
-  activeBlocks(l,dow).forEach(b=>b.dirs.forEach(d=>d.trips.forEach(t=>{if(t.start>=min&&(!best||t.start<best.t))best={t:t.start,d}})));
+  eachTrip(l,dow,(b,bi,d,di,t,p)=>{if(!p.cancel&&p.start>=min&&(!best||p.start<best.t))best={t:p.start,d,p}});
   return best;
 }
 function lineStatus(l){
   if(l.susp)return{cls:'warn',txt:'Suspensa'};
   if(!l.hasSched)return{cls:'',txt:'Horário sob consulta'};
-  const {dow,min}=NOW();const bl=activeBlocks(l,dow);
-  if(!bl.length)return{cls:'',txt:'Não opera hoje'};
-  const running=bl.some(b=>b.dirs.some(d=>d.trips.some(t=>min>=t.start&&min<=t.end)));
+  const {dow,min}=NOW();if(!activeBlocks(l,dow).length)return{cls:'',txt:'Não opera hoje'};
+  let running=false,started=false;
+  eachTrip(l,dow,(b,bi,d,di,t,p)=>{if(p.cancel)return;if(min>=p.start&&min<=p.end)running=true;if(p.end<min)started=true});
   if(running)return{cls:'ok',txt:'Em operação'};
   const nx=nextDeparture(l);
-  const started=bl.some(b=>b.dirs.some(d=>d.trips.some(t=>t.end<min)));
   return nx?{cls:'next',txt:(started?'Retoma às ':'Começa às ')+fmt(nx.t)}:{cls:'',txt:'Encerrada hoje'};
 }
-function busPos(trip,min){
-  if(min<trip.start||min>trip.end)return null;
-  const pts=trip.times.map((t,i)=>({t,i})).filter(p=>p.t!=null);
+// posição na sequência de paradas: entre a parada "from" e a "to", fração f do trecho
+function busPos(p,min){
+  if(p.cancel||min<p.start||min>p.end)return null;
+  const pts=p.times.map((t,i)=>({t,i})).filter(x=>x.t!=null);
   for(let k=0;k<pts.length-1;k++){const a=pts[k],b=pts[k+1];if(min>=a.t&&min<=b.t){const f=b.t===a.t?0:(min-a.t)/(b.t-a.t);return{from:a.i,to:b.i,f}}}
   return{from:pts[pts.length-1].i,to:pts[pts.length-1].i,f:0};
 }
 function eta(diff){if(diff<1)return{b:'agora',s:''};if(diff<60)return{b:Math.floor(diff),s:'min'};const h=Math.floor(diff/60),m=Math.floor(diff%60);return{b:h+'h'+String(m).padStart(2,'0'),s:''}}
 function plan(o,d){
   const {dow,min}=NOW();const out=[];
-  LINES.forEach(l=>activeBlocks(l,dow).forEach(b=>b.dirs.forEach((dir,di)=>{
+  LINES.forEach(l=>eachTrip(l,dow,(b,bi,dir,di,t,p)=>{
+    if(p.cancel)return;
     const oi=dir.stops.indexOf(o);if(oi<0)return;
     const dj=dir.stops.indexOf(d,oi+1);if(dj<0)return;
-    dir.trips.forEach(t=>{const a=t.times[oi],c=t.times[dj];if(a!=null&&c!=null&&a>=min-0.5)out.push({l,b,bi:l.blocks.indexOf(b),dir,di,dep:a,arr:c,trip:t,oi,dj});});
-  })));
+    const a=p.times[oi],c=p.times[dj];if(a!=null&&c!=null&&a>=min-0.5)out.push({l,b,bi,dir,di,dep:a,arr:c,trip:t,oi,dj,p});
+  }));
   return out.sort((x,y)=>x.dep-y.dep);
 }
 
-/* ================= ROUTER ================= */
+/* ================= ROTAS ================= */
 function go(h){location.hash=h}
 window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0)});
 let LIVE=()=>{};
@@ -479,26 +566,41 @@ function route(){
   document.querySelectorAll('#tabbar a,#navlinks a').forEach(a=>{const on=a.dataset.k===k;a.classList.toggle('on',on);on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
   $('#favcount').textContent=S.fav.size||'';
   document.title=(TITULOS[p[0]]||'Saídas')+' · Fronteira';
+  if(window._lmap){window._lmap.remove();window._lmap=null}
   const v={inicio:vHome,linhas:vLines,linha:vDetail,planejar:vPlan,mapa:vMap,favoritos:vFav}[p[0]]||vHome;
   LIVE=()=>{};
   v(p.slice(1).map(decodeURIComponent));
   LIVE();
 }
 
-/* ================= COMPONENTS ================= */
+/* ================= COMPONENTES ================= */
 const badge=(l,lg)=>`<span class="rb ${l.tipo==='Seletivo'?'sel':''} ${lg?'lg':''}" title="${esc(l.tipo)}">${esc(l.cod)}</span>`;
 const status=l=>{const s=lineStatus(l);return `<span class="st ${s.cls}"><i></i>${s.txt}</span>`};
 const starBtn=l=>`<button class="star ${S.fav.has(l.id)?'on':''}" aria-pressed="${S.fav.has(l.id)}" aria-label="${S.fav.has(l.id)?'Remover dos favoritos':'Adicionar aos favoritos'}" onclick="event.stopPropagation();toggleFav('${l.id}')">${S.fav.has(l.id)?'★':'☆'}</button>`;
 function toggleFav(id){S.fav.has(id)?S.fav.delete(id):S.fav.add(id);save();toast(S.fav.has(id)?'Adicionada aos favoritos':'Removida dos favoritos',LINE(id).nome);route()}
 const ph=(title,sub='',crumb='',extra='')=>`<header class="ph"><div class="container">${crumb?`<div class="crumb">${crumb}</div>`:''}<h1>${title}</h1>${sub?`<p class="sub">${sub}</p>`:''}${extra}</div></header>`;
 const stopOptions=sel=>ALLSTOPS.map(s=>`<option ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
-const whenHtml=(t,m)=>{const e=eta(t-m);return `<div class="when ${e.b==='agora'?'now':''}"><b>${e.b}${e.s?`<small>${e.s}</small>`:''}</b><span class="at">${fmt(t)}</span></div>`};
+function whenHtml(t,m,p,si){
+  const e=eta(t-m);
+  const sched=p&&si!=null&&p.raw[si]!=null&&Math.round(p.raw[si])!==Math.round(t)?`<span class="sched" title="Horário da tabela">${fmt(p.raw[si])}</span>`:'';
+  return `<div class="when ${e.b==='agora'?'now':''} ${p&&p.cancel?'cx':''}"><b>${p&&p.cancel?'—':e.b}${!(p&&p.cancel)&&e.s?`<small>${e.s}</small>`:''}</b><span class="at">${sched}${fmt(t)}</span></div>`;
+}
+function howModal(){
+  $('#modal').innerHTML=`<h3>Como a previsão é calculada</h3>
+  <p class="small muted" style="margin:6px 0 14px">Cada horário mostra de onde veio a informação.</p>
+  <div class="howrow"><span class="src"><i></i>Previsto pela tabela</span><p>Horário oficial publicado pela Fronteira. É uma previsão: não sabe de atrasos.</p></div>
+  <div class="howrow"><span class="src adj"><i></i>Ajustado</span><p>A empresa informou que, nesse horário do dia, alguns trechos costumam levar mais tempo. A previsão já soma essa diferença.</p></div>
+  <div class="howrow"><span class="src live"><i></i>Ao vivo</span><p>Alguém informou como a viagem está agora: a empresa (atraso ou cancelamento) ou um passageiro que viu o ônibus passar. As paradas seguintes são corrigidas.</p></div>
+  <p class="small muted" style="margin:14px 0 18px">No mapa, o ônibus <b style="color:var(--ok)">verde</b> tem informação ao vivo; o <b>tracejado</b> é a posição estimada. A posição real com GPS depende de um aparelho no ônibus, que ainda não existe.</p>
+  <button class="btn" style="width:100%" onclick="closeModal()">Entendi</button>`;
+  $('#modalBg').classList.add('open');
+}
 
-/* ================= VIEW: SAÍDAS (início) ================= */
+/* ================= TELA: SAÍDAS (início) ================= */
 function vHome(){
   $('#app').innerHTML=`<header class="ph"><div class="container">
       <div class="stoppick"><label for="mystop">Saídas de</label><select id="mystop" onchange="S.myStop=this.value;save();LIVE()">${stopOptions(S.myStop)}</select></div>
-      <p class="sub" id="homeSub"></p>
+      <p class="sub"><span id="homeSub"></span> · <button class="lnk" style="font-size:inherit" onclick="howModal()">Como a previsão é calculada</button></p>
     </div></header>
   <main><div class="container cols">
     <div>
@@ -524,8 +626,8 @@ function vHome(){
     const a=arrivalsAt(S.myStop,8);
     $('#homeSub').textContent=a.length?`Próximos ${a.length} ônibus nas próximas 3 horas · ${DIAS[NOW().dow]}`:`${DIAS[NOW().dow]}, ${fmt(m)}`;
     $('#pfrom').textContent=S.myStop;
-    $('#arr').innerHTML=a.length?a.map(x=>`<div class="dep" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${esc(x.d.stops[x.si]).replace(/'/g,"\\'")}')" onkeydown="if(event.key==='Enter')this.click()">
-      ${badge(x.l)}<div style="min-width:0"><div class="to">${esc(destOf(x.d.name))}</div><div class="via">${esc(x.l.nome)}</div></div>${whenHtml(x.t,m)}</div>`).join(''):
+    $('#arr').innerHTML=a.length?a.map(x=>`<div class="dep ${x.p.cancel?'cancel':''}" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(x.d.stops[x.si])}')" onkeydown="if(event.key==='Enter')this.click()">
+      ${badge(x.l)}<div style="min-width:0"><div class="to">${esc(destOf(x.d.name))}</div><div class="via">${esc(x.l.nome)} · ${srcShort(x.p)}</div></div>${whenHtml(x.t,m,x.p,x.si)}</div>`).join(''):
       `<div class="empty">Nenhum ônibus passa em <b>${esc(S.myStop)}</b> nas próximas 3 horas.<br>Escolha outra parada acima ou ajuste o relógio do modo demonstração no topo.</div>`;
     const favs=[...S.fav].map(LINE).filter(Boolean);
     $('#hfav').innerHTML=favs.length?favs.map(l=>{const nx=nextDeparture(l);return `<div class="li" onclick="go('#/linha/${l.id}')">${badge(l)}<span class="nm">${esc(l.nome)}</span><span class="nx">${nx?fmt(nx.t):'—'}</span></div>`}).join(''):'<div class="empty">Marque linhas com ☆ para ver as próximas saídas aqui.</div>';
@@ -534,7 +636,7 @@ function vHome(){
 function swapPlan(){const o=$('#po').value;$('#po').value=$('#pd').value;$('#pd').value=o}
 function doPlan(){S.plan.o=$('#po').value;S.plan.d=$('#pd').value;go('#/planejar/'+encodeURIComponent(S.plan.o)+'/'+encodeURIComponent(S.plan.d))}
 
-/* ================= VIEW: LINHAS ================= */
+/* ================= TELA: LINHAS ================= */
 function vLines(){
   const F={todas:'Todas',urbana:'Urbanas',seletivo:'Seletivo',favoritas:'Favoritas'};
   $('#app').innerHTML=ph('Linhas',`${LINES.length} linhas em Alegrete`)+
@@ -564,7 +666,7 @@ function vLines(){
   const q=$('#q');if(S.q){q.focus();q.setSelectionRange(99,99)}
 }
 
-/* ================= VIEW: LINHA ================= */
+/* ================= TELA: LINHA ================= */
 function openTrip(id,bi,di,tripIdx,stop){
   const l=LINE(id);const d=l.blocks[bi].dirs[di];
   S.det={block:bi,dir:di,stop:Math.max(0,d.stops.indexOf(stop)),trip:tripIdx,table:false,_id:id};go('#/linha/'+id);
@@ -585,7 +687,8 @@ function vDetail([id]){
     <main><div class="container">${avisosHtml(l.id)}<section class="panel"><div class="empty">A Fronteira ainda não publicou os horários desta linha.<br>${l.tipo==='Seletivo'?'Para o Seletivo Alegrete x Passo Novo, consulte a rodoviária.':'Consulte o atendimento da Fronteira Transportes.'}${l.nome.startsWith('Domingo')?'<br>Opera somente aos domingos.':''}</div></section></div></main>`;
     return;
   }
-  const B=l.blocks[S.det.block]||l.blocks[0];const D=B.dirs[S.det.dir]||B.dirs[0];
+  const bi=l.blocks[S.det.block]?S.det.block:0;const B=l.blocks[bi];
+  const di=B.dirs[S.det.dir]?S.det.dir:0;const D=B.dirs[di];
   if(S.det.stop>=D.stops.length)S.det.stop=0;
   const todayOk=B.days.includes(NOW().dow);
   $('#app').innerHTML=`<header class="ph"><div class="container"><div class="crumb">${crumb}</div>${head}${actions}</div></header>
@@ -594,8 +697,8 @@ function vDetail([id]){
     ${avisosHtml(l.id)}
     ${todayOk||l.susp?'':`<div class="notices"><div class="notice"><b>Esta tabela não vale para hoje (${DIAS[NOW().dow]})</b>Veja os horários para planejar outro dia.</div></div>`}
     <div class="controls">
-      <div class="seg" role="group" aria-label="Sentido">${B.dirs.map((d,i)=>`<button aria-pressed="${i===S.det.dir}" onclick="S.det.dir=${i};S.det.stop=${d.main};S.det.trip=null;route()">${esc(d.name)}</button>`).join('')}</div>
-      ${l.blocks.length>1?`<div class="seg" role="group" aria-label="Dias">${l.blocks.map((b,i)=>`<button aria-pressed="${i===S.det.block}" onclick="S.det.block=${i};S.det.dir=0;S.det.stop=${b.dirs[0].main};S.det.trip=null;route()">${esc(b.label)}</button>`).join('')}</div>`:`<span class="muted">${esc(B.label)}</span>`}
+      <div class="seg" role="group" aria-label="Sentido">${B.dirs.map((d,i)=>`<button aria-pressed="${i===di}" onclick="S.det.dir=${i};S.det.stop=${d.main};S.det.trip=null;route()">${esc(d.name)}</button>`).join('')}</div>
+      ${l.blocks.length>1?`<div class="seg" role="group" aria-label="Dias">${l.blocks.map((b,i)=>`<button aria-pressed="${i===bi}" onclick="S.det.block=${i};S.det.dir=0;S.det.stop=${b.dirs[0].main};S.det.trip=null;route()">${esc(b.label)}</button>`).join('')}</div>`:`<span class="muted">${esc(B.label)}</span>`}
     </div>
     <div class="cols">
       <div>
@@ -605,11 +708,11 @@ function vDetail([id]){
           <div class="panel-b"><div id="nextBox"></div></div>
           <div class="panel-b" style="padding-top:0">
             <div class="tg" id="tgrid" role="group" aria-label="Horários na parada"></div>
-            <div class="legend"><span><i style="border:1.5px solid var(--ok)"></i>Próxima</span><span><i style="background:var(--brand)"></i>Selecionada</span><span><i style="background:var(--line)"></i>Já passou</span></div>
+            <div class="legend"><span><i style="border:1.5px solid var(--ok)"></i>Próxima</span><span><i style="background:var(--brand)"></i>Selecionada</span><span><i style="background:var(--line)"></i>Já passou</span><span><i style="background:var(--ok);border-radius:50%"></i>Com informação ao vivo</span></div>
           </div>
         </section>
         <section class="panel">
-          <div class="panel-h"><h2>Tabela completa</h2><button class="lnk" onclick="S.det.table=!S.det.table;route()" aria-expanded="${S.det.table}">${S.det.table?'Ocultar':'Mostrar'}</button></div>
+          <div class="panel-h"><h2>Tabela oficial completa</h2><button class="lnk" onclick="S.det.table=!S.det.table;route()" aria-expanded="${S.det.table}">${S.det.table?'Ocultar':'Mostrar'}</button></div>
           ${S.det.table?'<div class="tbl-wrap" id="tbl"></div>':`<div class="empty" style="padding-top:12px;padding-bottom:14px">${D.stops.length} paradas e ${D.trips.length} viagens neste sentido.</div>`}
         </section>
       </div>
@@ -620,37 +723,52 @@ function vDetail([id]){
     </div>
   </div></main>`;
   LIVE=()=>{
-    const m=NOW().min;
-    const tr=D.trips.filter(t=>t.times[S.det.stop]!=null);
-    const nextT=tr.find(t=>t.times[S.det.stop]>=m-0.5);
-    const selT=S.det.trip!=null?D.trips.find(t=>t.idx===S.det.trip):(nextT||tr[tr.length-1]);
-    if(nextT){const t=nextT.times[S.det.stop];const e=eta(t-m);const last=nextT.times.filter(x=>x!=null).slice(-1)[0];
-      $('#nextBox').innerHTML=`<div class="small muted" style="margin-bottom:4px">Próximo ônibus em ${esc(D.stops[S.det.stop])}</div><div class="nextdep"><span class="big">${fmt(t)}</span><span class="in">${e.b==='agora'?'agora':'em '+e.b+(e.s?' '+e.s:'')}</span></div><div class="small muted" style="margin-top:6px">Chega em ${esc(D.stops[D.stops.length-1])} às <span class="mono">${fmt(last)}</span></div>`;
-    }else $('#nextBox').innerHTML=`<div class="small muted" style="margin-bottom:4px">${esc(D.stops[S.det.stop])}</div><div style="font-size:22px;font-weight:700">Sem mais ônibus hoje</div><div class="small muted" style="margin-top:4px">Primeiro horário: <span class="mono">${tr[0]?fmt(tr[0].times[S.det.stop]):'—'}</span></div>`;
-    $('#tgrid').innerHTML=tr.map(t=>{const v=t.times[S.det.stop];const c=t===selT?'on':t===nextT?'next':v<m-0.5?'past':'';return `<button class="tm ${c}" aria-pressed="${t===selT}" onclick="S.det.trip=${t.idx};LIVE()">${fmt(v)}</button>`}).join('');
-    if(selT){const p=busPos(selT,m);
-      $('#itinSub').textContent='Viagem das '+fmt(selT.start)+(p?' · em trânsito':selT.end<m?' · concluída':'');
-      $('#itin').innerHTML=D.stops.map((s,i)=>{const t=selT.times[i];if(t==null)return'';const done=t<m;
-        const here=p&&((p.from===i&&p.f<0.5)||(p.to===i&&p.f>=0.5));
-        return `<div class="stop ${done?'done':''} ${i===S.det.stop?'sel':''} ${here?'bus':''}" onclick="S.det.stop=${i};route()"><div class="sdot"></div><div class="nm">${esc(s)}${here?'<span class="tag-here">ônibus aqui</span>':''}</div><div class="hr">${fmt(t)}</div></div>`}).join('');
+    const m=NOW().min,s=S.det.stop;
+    const PT=D.trips.map(t=>({t,p:P(l,bi,di,t)})).filter(x=>x.p.times[s]!=null);
+    const nx=PT.find(x=>!x.p.cancel&&x.p.times[s]>=m-0.5);
+    const sel=S.det.trip!=null?PT.find(x=>x.t.idx===S.det.trip):(nx||PT[PT.length-1]);
+    // relato de passageiro: a viagem prevista mais perto de agora nesta parada
+    const cand=PT.filter(x=>!x.p.cancel&&Math.abs(x.p.times[s]-m)<=15&&!(x.p.src==='passageiro'&&x.p.from===s)).sort((a,b)=>Math.abs(a.p.times[s]-m)-Math.abs(b.p.times[s]-m))[0];
+    const report=cand?`<div class="report"><span class="small muted">Está na parada?</span><button class="btn sec sm" onclick="reportPassed('${l.id}',${bi},${di},${cand.t.idx},${s})">${ICON.bus} O ônibus das ${fmt(cand.p.times[s])} passou agora</button></div>`:'';
+    if(nx){const t=nx.p.times[s];const e=eta(t-m);const last=nx.p.times.filter(x=>x!=null).slice(-1)[0];
+      $('#nextBox').innerHTML=`<div class="small muted" style="margin-bottom:4px">Próximo ônibus em ${esc(D.stops[s])}</div><div class="nextdep"><span class="big">${fmt(t)}</span><span class="in">${e.b==='agora'?'agora':'em '+e.b+(e.s?' '+e.s:'')}</span></div>
+      <div style="margin-top:6px">${srcLabel(nx.p)}${Math.round(nx.p.raw[s])!==Math.round(t)?` <span class="small muted">· tabela: <span class="mono">${fmt(nx.p.raw[s])}</span></span>`:''}</div>
+      <div class="small muted" style="margin-top:4px">Chega em ${esc(D.stops[D.stops.length-1])} às <span class="mono">${fmt(last)}</span> · <button class="lnk small" onclick="howModal()">Como calculamos</button></div>${report}`;
+    }else $('#nextBox').innerHTML=`<div class="small muted" style="margin-bottom:4px">${esc(D.stops[s])}</div><div style="font-size:22px;font-weight:700">Sem mais ônibus hoje</div><div class="small muted" style="margin-top:4px">Primeiro horário: <span class="mono">${PT[0]?fmt(PT[0].t.times[s]):'—'}</span></div>${report}`;
+    $('#tgrid').innerHTML=PT.map(x=>{const v=x.p.times[s];const c=x===sel?'on':x===nx?'next':v<m-0.5?'past':'';return `<button class="tm ${c} ${isLive(x.p)?'lv':''} ${x.p.cancel?'cx':''}" aria-pressed="${x===sel}" title="${x.p.cancel?'Cancelada':isLive(x.p)?'Com informação ao vivo':''}" onclick="S.det.trip=${x.t.idx};LIVE()">${fmt(v)}</button>`}).join('');
+    if(sel){const p=sel.p,pos=busPos(p,m);
+      $('#itinSub').innerHTML='Viagem das '+fmt(p.start)+(p.cancel?' · cancelada':pos?' · em trânsito':p.end<m?' · concluída':'')+'<br>'+srcShort(p);
+      $('#itin').innerHTML=D.stops.map((st,i)=>{const t=p.times[i];if(t==null)return'';const done=t<m;
+        const here=pos&&((pos.from===i&&pos.f<0.5)||(pos.to===i&&pos.f>=0.5));
+        return `<div class="stop ${done?'done':''} ${i===s?'sel':''} ${here?'bus':''}" onclick="S.det.stop=${i};route()"><div class="sdot"></div><div class="nm">${esc(st)}${here?`<span class="tag-here">${isLive(p)?'ônibus aqui':'ônibus deve estar aqui'}</span>`:''}</div><div class="hr">${fmt(t)}</div></div>`}).join('');
     }
     if(S.det.table){
-      $('#tbl').innerHTML=`<table><thead><tr><th>Parada</th>${D.trips.map((t,j)=>`<th>${j+1}ª</th>`).join('')}</tr></thead><tbody>${D.stops.map((s,i)=>`<tr><td>${esc(s)}</td>${D.trips.map(t=>{const v=t.times[i];if(v==null)return'<td class="nil">—</td>';return `<td class="${t===selT?'colsel':''} ${t===nextT&&i===S.det.stop?'nx':''} ${v<m?'past':''}">${fmt(v)}</td>`}).join('')}</tr>`).join('')}</tbody></table>`;
+      const sT=sel&&sel.t;
+      $('#tbl').innerHTML=`<table><thead><tr><th>Parada</th>${D.trips.map((t,j)=>`<th>${j+1}ª</th>`).join('')}</tr></thead><tbody>${D.stops.map((st,i)=>`<tr><td>${esc(st)}</td>${D.trips.map(t=>{const v=t.times[i];if(v==null)return'<td class="nil">—</td>';return `<td class="${t===sT?'colsel':''} ${nx&&t===nx.t&&i===s?'nx':''} ${v<m?'past':''}">${fmt(v)}</td>`}).join('')}</tr>`).join('')}</tbody></table>`;
     }
   };
 }
+function reportPassed(id,bi,di,idx,s){
+  const l=LINE(id);const t=l.blocks[bi].dirs[di].trips.find(x=>x.idx===idx);
+  const base=predict(l,bi,di,t,true).times[s];const m=NOW().min;
+  const delay=Math.round(m-base);
+  DB.setLive(tripKey(l,bi,di,t),{delay,from:s,src:'passageiro',min:m},NOWK());
+  LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();
+  toast('Obrigado pelo relato',`Previsão corrigida: ${delay>0?delay+' min atrasado':delay<0?(-delay)+' min adiantado':'no horário'}. Com servidor, todos os passageiros veriam.`);
+  LIVE();
+}
 
-/* ================= ALERTAS ================= */
+/* ================= AVISOS DE CHEGADA ================= */
 function openAlert(id){
   const l=LINE(id);const B=l.blocks[S.det.block];const D=B.dirs[S.det.dir];const m=NOW().min;
   const tr=D.trips.filter(t=>t.times[S.det.stop]!=null);
   const def=(S.det.trip!=null?D.trips.find(t=>t.idx===S.det.trip):null)||tr.find(t=>t.times[S.det.stop]>=m)||tr[0];
   $('#modal').innerHTML=`<div class="row" style="margin-bottom:4px">${badge(l)}<h3>Avisar quando chegar</h3></div>
-  <p class="small muted" style="margin-bottom:18px">${esc(D.name)}. O app avisa antes do ônibus passar na parada.</p>
+  <p class="small muted" style="margin-bottom:18px">${esc(D.name)}. O app avisa antes do ônibus passar na parada, usando a previsão mais atual.</p>
   <label class="fl" for="aStop">Parada</label>
   <select class="inp" id="aStop" style="width:100%;margin-bottom:12px" onchange="refreshAlertTimes('${id}')">${D.stops.map((s,i)=>`<option value="${i}" ${i===S.det.stop?'selected':''}>${esc(s)}</option>`).join('')}</select>
   <div class="row" style="gap:10px;margin-bottom:14px;align-items:flex-start">
-    <div style="flex:1"><label class="fl" for="aTrip">Horário</label><select class="inp mono" id="aTrip" style="width:100%"></select></div>
+    <div style="flex:1"><label class="fl" for="aTrip">Horário da tabela</label><select class="inp mono" id="aTrip" style="width:100%"></select></div>
     <div style="flex:1"><label class="fl" for="aBefore">Antecedência</label><select class="inp" id="aBefore" style="width:100%"><option value="2">2 min antes</option><option value="5" selected>5 min antes</option><option value="10">10 min antes</option><option value="15">15 min antes</option></select></div>
   </div>
   <label class="row small" style="gap:8px;margin-bottom:20px"><input type="checkbox" id="aRep" checked> Repetir nos dias em que a linha opera</label>
@@ -664,7 +782,7 @@ function refreshAlertTimes(id,pref){
 function saveAlert(id){
   const l=LINE(id);const B=l.blocks[S.det.block];const D=B.dirs[S.det.dir];const si=+$('#aStop').value;const ti=+$('#aTrip').value;
   const t=D.trips.find(x=>x.idx===ti).times[si];
-  S.alerts.push({id:Date.now(),line:id,block:S.det.block,dir:S.det.dir,dirName:D.name,stop:D.stops[si],time:t,before:+$('#aBefore').value,rep:$('#aRep').checked,days:B.days,on:true,fired:null});
+  S.alerts.push({id:Date.now(),line:id,block:S.det.block,dir:S.det.dir,dirName:D.name,stop:D.stops[si],si,trip:ti,time:t,before:+$('#aBefore').value,rep:$('#aRep').checked,days:B.days,on:true,fired:null});
   save();closeModal();toast('Aviso criado',`${l.cod} em ${D.stops[si]} às ${fmt(t)}`);
   if('Notification'in window&&Notification.permission==='default')try{Notification.requestPermission()}catch(e){}
   route();
@@ -673,17 +791,21 @@ function closeModal(){$('#modalBg').classList.remove('open')}
 function checkAlerts(){
   const {dow,min}=NOW();
   S.alerts.forEach(a=>{if(!a.on||!a.days.includes(dow))return;const key=dow+'-'+Math.floor(a.time);
-    const diff=a.time-min;
-    if(diff<=a.before&&diff>-1&&a.fired!==key){a.fired=key;const l=LINE(a.line);
-      const msg=`${l.cod} ${a.dirName} passa em ${a.stop} às ${fmt(a.time)} (${Math.max(0,Math.round(diff))} min)`;
+    // usa o horário previsto (com ajustes e informação ao vivo), não só o da tabela
+    let when=a.time,p=null;const l=LINE(a.line);
+    const t=l&&l.blocks[a.block]&&l.blocks[a.block].dirs[a.dir]&&l.blocks[a.block].dirs[a.dir].trips.find(x=>x.idx===a.trip);
+    if(t&&a.si!=null){p=P(l,a.block,a.dir,t);if(p.cancel)return;if(p.times[a.si]!=null)when=p.times[a.si]}
+    const diff=when-min;
+    if(diff<=a.before&&diff>-1&&a.fired!==key){a.fired=key;
+      const msg=`${l.cod} ${a.dirName} passa em ${a.stop} às ${fmt(when)} (${Math.max(0,Math.round(diff))} min)${p&&isLive(p)?' · ao vivo':''}`;
       toast('Seu ônibus está chegando',msg,true);
       try{if(Notification.permission==='granted')new Notification('Fronteira · ônibus chegando',{body:msg})}catch(e){}
       if(!a.rep)a.on=false;save();}
   });
 }
-function toast(t,s,strong){const el=document.createElement('div');el.className='toast'+(strong?' ok':'');el.innerHTML=`<b>${esc(t)}</b><span>${esc(s)}</span>`;$('#toasts').appendChild(el);setTimeout(()=>el.remove(),strong?8000:3200)}
+function toast(t,s,strong){const el=document.createElement('div');el.className='toast'+(strong?' ok':'');el.innerHTML=`<b>${esc(t)}</b><span>${esc(s)}</span>`;$('#toasts').appendChild(el);setTimeout(()=>el.remove(),strong?8000:4200)}
 
-/* ================= VIEW: COMO CHEGAR ================= */
+/* ================= TELA: COMO CHEGAR ================= */
 function vPlan([o,d]){
   if(o)S.plan.o=o;if(d)S.plan.d=d;
   $('#app').innerHTML=ph('Como chegar','Linhas diretas entre duas paradas, com os próximos horários.')+
@@ -703,44 +825,53 @@ function vPlan([o,d]){
     $('#pt').textContent=S.plan.o===S.plan.d?'Escolha paradas diferentes':`${S.plan.o} → ${S.plan.d}`;
     if(S.plan.o===S.plan.d){$('#pres').innerHTML='';$('#pn').textContent='';return}
     $('#pn').textContent=r.length?`${Math.min(r.length,8)} de ${r.length} viagens hoje`:'';
-    $('#pres').innerHTML=r.length?r.slice(0,8).map(x=>`<div class="trip" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${esc(S.plan.o).replace(/'/g,"\\'")}')" onkeydown="if(event.key==='Enter')this.click()">
-      ${badge(x.l)}<div style="min-width:0"><div style="font-weight:700">${esc(destOf(x.dir.name))}</div><div class="small muted">${esc(x.l.nome)} · ${x.dj-x.oi} ${x.dj-x.oi===1?'parada':'paradas'} · <span class="mono">${x.arr-x.dep} min</span></div></div>
+    $('#pres').innerHTML=r.length?r.slice(0,8).map(x=>`<div class="trip" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(S.plan.o)}')" onkeydown="if(event.key==='Enter')this.click()">
+      ${badge(x.l)}<div style="min-width:0"><div style="font-weight:700">${esc(destOf(x.dir.name))}</div><div class="small muted">${esc(x.l.nome)} · ${x.dj-x.oi} ${x.dj-x.oi===1?'parada':'paradas'} · <span class="mono">${Math.round(x.arr-x.dep)} min</span> · ${srcShort(x.p)}</div></div>
       <div class="tt">${fmt(x.dep)}<span>→</span>${fmt(x.arr)}</div>
       ${whenHtml(x.dep,m).replace(/<span class="at">.*?<\/span>/,'')}</div>`).join(''):
       `<div class="empty">Nenhuma linha direta de <b>${esc(S.plan.o)}</b> para <b>${esc(S.plan.d)}</b> no restante do dia.<br>Tente inverter o sentido ou uma parada próxima.</div>`;
   };
 }
 
-/* ================= VIEW: MAPA ================= */
+/* ================= TELA: MAPA ================= */
+// distância aproximada em metros entre dois [lat,lng] (suficiente para uma cidade)
+function dist(a,b){const k=111320,dx=(b[1]-a[1])*k*Math.cos(a[0]*Math.PI/180),dy=(b[0]-a[0])*k;return Math.hypot(dx,dy)}
+function pointAlong(path,f){
+  if(path.length<2)return path[0];
+  const seg=[];let tot=0;for(let i=1;i<path.length;i++){const d=dist(path[i-1],path[i]);seg.push(d);tot+=d}
+  let alvo=tot*Math.min(1,Math.max(0,f));
+  for(let i=0;i<seg.length;i++){if(alvo<=seg[i]||i===seg.length-1){const g=seg[i]?alvo/seg[i]:0;const a=path[i],b=path[i+1];return[a[0]+(b[0]-a[0])*g,a[1]+(b[1]-a[1])*g]}alvo-=seg[i]}
+  return path[path.length-1];
+}
+// geometria do sentido: coordenadas das paradas e traçado pelas ruas de cada trecho
+function geomOf(l,D){
+  const coords=D.stops.map(s=>(DBD.paradas||{})[s]);
+  if(coords.some(c=>!c))return null;
+  const legs=(DBD.rotas||{})[dirKey(l,D)];
+  const pts=coords.map(c=>[c.lat,c.lng]);
+  const leg=i=>legs&&legs[i]&&legs[i].length>1?legs[i]:[pts[i],pts[i+1]];
+  return {coords,pts,leg,ruas:!!legs};
+}
+function pathBetween(g,from,to){let p=[];for(let k=from;k<to;k++)p=p.concat(g.leg(k));return p.length?p:[g.pts[from]]}
 function vMap(){
   const withS=LINES.filter(l=>l.hasSched);
   let l=LINE(S.map.line);if(!l||!l.hasSched){l=withS[0];S.map={line:l.id,block:0,dir:0}}
-  const B=l.blocks[S.map.block]||l.blocks[0];const D=B.dirs[S.map.dir]||B.dirs[0];
-  const W=780,cols=4,padX=80,rowH=118,top=70;const n=D.stops.length;const rows=Math.ceil(n/cols);const H=top+rows*rowH+20;
-  const pos=D.stops.map((s,i)=>{const r=Math.floor(i/cols),c=i%cols;const cc=r%2?cols-1-c:c;return{x:padX+cc*((W-2*padX)/(cols-1)),y:top+r*rowH}});
-  let path='M'+pos[0].x+' '+pos[0].y;for(let i=1;i<n;i++){const a=pos[i-1],b=pos[i];if(a.y===b.y)path+=` L${b.x} ${b.y}`;else{const dx=a.x>W/2?50:-50;path+=` C${a.x+dx} ${a.y} ${b.x+dx} ${b.y} ${b.x} ${b.y}`}}
-  window._mp={pos,D,l};
-  $('#app').innerHTML=ph('Mapa','Posição dos ônibus estimada pela tabela oficial. Toque numa parada para defini-la como sua.')+
+  const bi=l.blocks[S.map.block]?S.map.block:0;const B=l.blocks[bi];
+  const di=B.dirs[S.map.dir]?S.map.dir:0;const D=B.dirs[di];
+  const g=geomOf(l,D);
+  const cidade=S.mapMode==='cidade'&&g&&window.L;
+  $('#app').innerHTML=ph('Mapa',cidade?'Trajeto pelas ruas de Alegrete. A posição do ônibus é estimada, a menos que haja informação ao vivo.':'Esquema do trajeto. Toque numa parada para defini-la como sua.')+
   `<main><div class="container">
     <div class="controls">
       <select class="inp" style="min-width:260px" aria-label="Linha" onchange="S.map={line:this.value,block:0,dir:0};route()">${withS.map(x=>`<option value="${x.id}" ${x.id===l.id?'selected':''}>${esc(x.cod)} · ${esc(x.nome)}</option>`).join('')}</select>
-      ${l.blocks.length>1?`<select class="inp" aria-label="Dias" onchange="S.map.block=+this.value;S.map.dir=0;route()">${l.blocks.map((b,i)=>`<option value="${i}" ${i===S.map.block?'selected':''}>${esc(b.label)}</option>`).join('')}</select>`:''}
-      <div class="seg" role="group" aria-label="Sentido">${B.dirs.map((d,i)=>`<button aria-pressed="${i===S.map.dir}" onclick="S.map.dir=${i};route()">${esc(d.name)}</button>`).join('')}</div>
-      <span class="livebadge" style="margin-left:auto"><i></i>Atualizando</span>
+      ${l.blocks.length>1?`<select class="inp" aria-label="Dias" onchange="S.map.block=+this.value;S.map.dir=0;route()">${l.blocks.map((b,i)=>`<option value="${i}" ${i===bi?'selected':''}>${esc(b.label)}</option>`).join('')}</select>`:''}
+      <div class="seg" role="group" aria-label="Sentido">${B.dirs.map((d,i)=>`<button aria-pressed="${i===di}" onclick="S.map.dir=${i};route()">${esc(d.name)}</button>`).join('')}</div>
+      <div class="seg" role="group" aria-label="Tipo de mapa" style="margin-left:auto"><button aria-pressed="${!!cidade}" onclick="S.mapMode='cidade';save();route()" ${g&&window.L?'':'disabled title="Mapa da cidade indisponível (sem internet ou sem posição das paradas)"'}>Cidade</button><button aria-pressed="${!cidade}" onclick="S.mapMode='esquema';save();route()">Esquema</button></div>
     </div>
     <div class="cols">
-      <div class="mapwrap">
-        <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" role="img" aria-label="Trajeto da linha ${esc(l.nome)}">
-          <defs><pattern id="gr" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="#F7F6F2" stroke-width="9"/></pattern></defs>
-          <rect width="${W}" height="${H}" fill="#ECEAE3"/><rect width="${W}" height="${H}" fill="url(#gr)"/>
-          <rect x="${W-190}" y="20" width="150" height="90" rx="6" fill="#DCE3D2"/><rect x="30" y="${H-120}" width="130" height="90" rx="6" fill="#DCE3D2"/>
-          <path d="M0 ${H*0.45} Q ${W*0.35} ${H*0.3} ${W*0.6} ${H*0.55} T ${W} ${H*0.5}" stroke="#CFDCE3" stroke-width="26" fill="none"/>
-          <path d="${path}" stroke="#F7F6F2" stroke-width="13" fill="none" stroke-linecap="round"/>
-          <path d="${path}" stroke="#002460" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          ${pos.map((p,i)=>`<g style="cursor:pointer" onclick="setMyStop('${esc(D.stops[i]).replace(/'/g,"\\'")}')"><circle cx="${p.x}" cy="${p.y}" r="${i===0||i===n-1?9:7}" fill="${i===0||i===n-1?'#002460':'#fff'}" stroke="#002460" stroke-width="3"/>
-            <text x="${p.x}" y="${p.y+28}" text-anchor="middle" font-size="13" font-weight="600" fill="#1D1D1B" font-family="Atkinson Hyperlegible Next,system-ui" paint-order="stroke" stroke="#ECEAE3" stroke-width="4">${esc(D.stops[i].length>22?D.stops[i].slice(0,21)+'…':D.stops[i])}</text></g>`).join('')}
-          <g id="buses"></g>
-        </svg>
+      <div>
+        ${cidade?'<div class="mapwrap"><div id="leaf" role="img" aria-label="Mapa da linha '+esc(l.nome)+'"></div></div>':`<div class="mapwrap">${schemaSvg(D)}</div>`}
+        <div class="maplegend"><span><i class="lg-bus live"></i>Ônibus com informação ao vivo</span><span><i class="lg-bus est"></i>Posição estimada</span>${cidade?'<span><i class="lg-stop est"></i>Parada com posição a confirmar</span>':''}<button class="lnk small" onclick="howModal()">Como calculamos</button></div>
       </div>
       <section class="panel">
         <div class="panel-h"><div><h2>${esc(D.name)}</h2><div class="small muted" id="mapSub"></div></div>${badge(l)}</div>
@@ -750,21 +881,63 @@ function vMap(){
       </section>
     </div>
   </div></main>`;
+  const mk=new Map();
+  if(cidade){
+    const map=L.map('leaf',{zoomControl:true,scrollWheelZoom:true});window._lmap=map;
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+    let full=[];for(let k=0;k<g.pts.length-1;k++)full=full.concat(g.leg(k));
+    L.polyline(full,{color:'#FFFFFF',weight:9,opacity:.9}).addTo(map);
+    L.polyline(full,{color:'#002460',weight:5,opacity:.95}).addTo(map);
+    D.stops.forEach((s,i)=>{const c=g.coords[i];const ponta=i===0||i===D.stops.length-1;
+      L.circleMarker([c.lat,c.lng],{radius:ponta?7:5.5,color:'#002460',weight:2.5,fillColor:ponta?'#002460':'#fff',fillOpacity:1,dashArray:c.prec==='ponto'||c.prec==='conferida'?null:'3 3'})
+       .bindTooltip(esc(s)+(c.prec==='estimada'?' · posição estimada':c.prec==='aproximada'?' · posição aproximada':''),{direction:'top'})
+       .on('click',()=>setMyStop(s)).addTo(map)});
+    map.fitBounds(L.latLngBounds(full),{padding:[24,24]});
+  }
   LIVE=()=>{
-    const m=NOW().min;const {pos,D}=window._mp;
-    const act=D.trips.map(t=>({t,p:busPos(t,m)})).filter(x=>x.p);
-    $('#buses').innerHTML=act.map(({t,p})=>{const a=pos[p.from],b=pos[p.to];const x=a.x+(b.x-a.x)*p.f,y=a.y+(b.y-a.y)*p.f;
-      return `<g class="bus-g" style="transform:translate(${x}px,${y}px)"><rect x="-15" y="-15" width="30" height="30" rx="6" fill="#1D7A45" stroke="#fff" stroke-width="2.5"/><g transform="translate(-9,-9) scale(.75)" fill="none" stroke="#fff" stroke-width="2.4"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></g>
-      <g transform="translate(19,-29)"><rect width="52" height="21" rx="4" fill="#1D1D1B"/><text x="26" y="15" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Atkinson Hyperlegible Mono,monospace">${fmt(t.start)}</text></g></g>`}).join('');
-    $('#mapSub').textContent=act.length?`${act.length} ${act.length>1?'ônibus':'ônibus'} em trânsito`:'Nenhum ônibus em trânsito agora';
-    $('#busList').innerHTML=act.length?act.map(({t,p})=>{const nxt=D.stops[p.f>0?p.to:p.from];const nt=t.times[p.f>0?p.to:p.from];return `<div class="li" style="cursor:default"><span class="livebadge"><i></i></span><div style="min-width:0"><div class="nm">Saída das <span class="mono">${fmt(t.start)}</span></div><div class="small muted">Indo para ${esc(nxt)}</div></div><span class="nx">${fmt(nt)}</span></div>`}).join(''):`<div class="empty">Nenhum ônibus desta linha circulando às <span class="mono">${fmt(m)}</span>. ${(()=>{const nx=D.trips.find(t=>t.start>m);return nx?'Próxima saída às <b class="mono">'+fmt(nx.start)+'</b>.':'Operação encerrada hoje.'})()}</div>`;
-    $('#stopEtas').innerHTML=D.stops.map((s,i)=>{const nx=D.trips.map(t=>t.times[i]).filter(v=>v!=null&&v>=m-0.5).sort((a,b)=>a-b)[0];const e=nx!=null?eta(nx-m):null;
-      return `<div class="li" onclick="setMyStop('${esc(s).replace(/'/g,"\\'")}')"><span class="nm" style="font-weight:500">${esc(s)}${s===S.myStop?' <span class="small muted">(sua parada)</span>':''}</span><span class="nx" style="color:${e&&e.b==='agora'?'var(--ok)':'var(--ink)'}">${e?(e.b==='agora'?'agora':e.b+(e.s?' '+e.s:'')):'—'}</span></div>`}).join('');
+    const m=NOW().min;
+    const act=D.trips.map(t=>({t,p:P(l,bi,di,t)})).map(x=>({...x,pos:busPos(x.p,m)})).filter(x=>x.pos);
+    if(cidade&&window._lmap){
+      const vivos=new Set();
+      act.forEach(x=>{const k=x.t.idx;vivos.add(k);
+        const path=pathBetween(g,x.pos.from,x.pos.to);const ll=x.pos.from===x.pos.to?g.pts[x.pos.from]:pointAlong(path,x.pos.f);
+        const html=`<div class="bmk ${isLive(x.p)?'live':'est'}">${ICON.bus}</div><div class="blbl">${fmt(x.p.start)}</div>`;
+        let mm=mk.get(k);
+        if(!mm){mm=L.marker(ll,{icon:L.divIcon({className:'bicon',html,iconSize:[30,30],iconAnchor:[15,15]}),keyboard:false}).addTo(window._lmap);mk.set(k,mm)}
+        else{mm.setLatLng(ll);mm.setIcon(L.divIcon({className:'bicon',html,iconSize:[30,30],iconAnchor:[15,15]}))}
+        mm.bindTooltip(`Saída das ${fmt(x.p.start)} · ${isLive(x.p)?'ao vivo':'posição estimada'}`);
+      });
+      for(const [k,mm] of mk)if(!vivos.has(k)){mm.remove();mk.delete(k)}
+    }else if(!cidade){
+      const pos=window._mp.pos;
+      $('#buses').innerHTML=act.map(x=>{const a=pos[x.pos.from],b=pos[x.pos.to];const X=a.x+(b.x-a.x)*x.pos.f,Y=a.y+(b.y-a.y)*x.pos.f;const live=isLive(x.p);
+        return `<g class="bus-g" style="transform:translate(${X}px,${Y}px)"><rect x="-15" y="-15" width="30" height="30" rx="6" fill="${live?'#1D7A45':'#fff'}" stroke="${live?'#fff':'#002460'}" stroke-width="2.5" ${live?'':'stroke-dasharray="4 3"'}/><g transform="translate(-9,-9) scale(.75)" fill="none" stroke="${live?'#fff':'#002460'}" stroke-width="2.4"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></g>
+        <g transform="translate(19,-29)"><rect width="52" height="21" rx="4" fill="#1D1D1B"/><text x="26" y="15" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Atkinson Hyperlegible Mono,monospace">${fmt(x.p.start)}</text></g></g>`}).join('');
+    }
+    $('#mapSub').textContent=act.length?`${act.length} ônibus em trânsito`:'Nenhum ônibus em trânsito agora';
+    $('#busList').innerHTML=act.length?act.map(x=>{const i=x.pos.f>0?x.pos.to:x.pos.from;return `<div class="li" style="cursor:default"><span class="bmk sm ${isLive(x.p)?'live':'est'}">${ICON.bus}</span><div style="min-width:0;flex:1"><div class="nm">Saída das <span class="mono">${fmt(x.p.start)}</span></div><div class="small muted">Indo para ${esc(D.stops[i])} · ${srcShort(x.p)}</div></div><span class="nx">${fmt(x.p.times[i])}</span></div>`}).join(''):`<div class="empty">Nenhum ônibus desta linha circulando às <span class="mono">${fmt(m)}</span>. ${(()=>{const n=D.trips.map(t=>P(l,bi,di,t)).find(p=>!p.cancel&&p.start>m);return n?'Próxima saída às <b class="mono">'+fmt(n.start)+'</b>.':'Operação encerrada hoje.'})()}</div>`;
+    $('#stopEtas').innerHTML=D.stops.map((s,i)=>{const nx=D.trips.map(t=>P(l,bi,di,t)).filter(p=>!p.cancel).map(p=>p.times[i]).filter(v=>v!=null&&v>=m-0.5).sort((a,b)=>a-b)[0];const e=nx!=null?eta(nx-m):null;
+      return `<div class="li" onclick="setMyStop('${jsq(s)}')"><span class="nm" style="font-weight:500">${esc(s)}${s===S.myStop?' <span class="small muted">(sua parada)</span>':''}</span><span class="nx" style="color:${e&&e.b==='agora'?'var(--ok)':'var(--ink)'}">${e?(e.b==='agora'?'agora':e.b+(e.s?' '+e.s:'')):'—'}</span></div>`}).join('');
   };
+}
+// esquema (sem internet ou sem posição das paradas)
+function schemaSvg(D){
+  const W=780,cols=4,padX=80,rowH=118,top=70;const n=D.stops.length;const rows=Math.ceil(n/cols);const H=top+rows*rowH+20;
+  const pos=D.stops.map((s,i)=>{const r=Math.floor(i/cols),c=i%cols;const cc=r%2?cols-1-c:c;return{x:padX+cc*((W-2*padX)/(cols-1)),y:top+r*rowH}});
+  let path='M'+pos[0].x+' '+pos[0].y;for(let i=1;i<n;i++){const a=pos[i-1],b=pos[i];if(a.y===b.y)path+=` L${b.x} ${b.y}`;else{const dx=a.x>W/2?50:-50;path+=` C${a.x+dx} ${a.y} ${b.x+dx} ${b.y} ${b.x} ${b.y}`}}
+  window._mp={pos};
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block" role="img" aria-label="Esquema do trajeto">
+    <defs><pattern id="gr" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="#F7F6F2" stroke-width="9"/></pattern></defs>
+    <rect width="${W}" height="${H}" fill="#ECEAE3"/><rect width="${W}" height="${H}" fill="url(#gr)"/>
+    <path d="${path}" stroke="#F7F6F2" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <path d="${path}" stroke="#002460" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    ${pos.map((p,i)=>`<g style="cursor:pointer" onclick="setMyStop('${jsq(D.stops[i])}')"><circle cx="${p.x}" cy="${p.y}" r="${i===0||i===n-1?9:7}" fill="${i===0||i===n-1?'#002460':'#fff'}" stroke="#002460" stroke-width="3"/>
+      <text x="${p.x}" y="${p.y+28}" text-anchor="middle" font-size="13" font-weight="600" fill="#1D1D1B" font-family="Atkinson Hyperlegible Next,system-ui" paint-order="stroke" stroke="#ECEAE3" stroke-width="4">${esc(D.stops[i].length>22?D.stops[i].slice(0,21)+'…':D.stops[i])}</text></g>`).join('')}
+    <g id="buses"></g></svg>`;
 }
 function setMyStop(s){S.myStop=s;save();toast('Sua parada agora é',s);LIVE()}
 
-/* ================= VIEW: FAVORITOS ================= */
+/* ================= TELA: FAVORITOS ================= */
 function vFav(){
   const favs=[...S.fav].map(LINE).filter(Boolean);
   $('#app').innerHTML=ph('Favoritos','Suas linhas do dia a dia e os avisos de chegada.')+
@@ -778,13 +951,12 @@ function vFav(){
     </div>
   </div></main>`;
   LIVE=()=>{
-    const m=NOW().min;
-    $('#favs').innerHTML=favs.length?favs.map(l=>{
+    const m=NOW().min,dow=NOW().dow;
+    $('#favs').innerHTML=favs.length?favs.map((l,ix)=>{
       if(!l.hasSched)return `<div class="li" onclick="go('#/linha/${l.id}')">${badge(l)}<div style="min-width:0;flex:1"><div class="nm">${esc(l.nome)}</div><div class="small muted">Horário sob consulta</div></div>${starBtn(l)}</div>`;
-      const bl=activeBlocks(l,NOW().dow);
-      const dirs=(bl[0]||l.blocks[0]).dirs;
-      return `<div style="padding:14px 18px;border-top:1px solid var(--line)"><div class="row" style="cursor:pointer" onclick="go('#/linha/${l.id}')">${badge(l)}<div style="flex:1;min-width:0"><div style="font-weight:700">${esc(l.nome)}</div>${status(l)}</div>${starBtn(l)}</div>
-      ${dirs.map(d=>{const nx=d.trips.filter(t=>t.start>=m-0.5).slice(0,5);return `<div style="margin-top:12px"><div class="small muted" style="margin-bottom:6px">${esc(d.name)} · saída de ${esc(d.stops[0])}</div><div class="row" style="gap:6px;flex-wrap:wrap">${nx.length?nx.map((t,i)=>`<span class="tm ${i===0?'next':''}" style="display:inline-grid;place-items:center;width:70px">${fmt(t.start)}</span>`).join(''):'<span class="small muted">Sem mais saídas hoje</span>'}</div></div>`}).join('')}</div>`}).join('').replace('border-top:1px solid var(--line)','border-top:none'):'<div class="empty">Nenhuma linha favorita. Toque em ☆ numa linha para adicioná-la.</div>';
+      const bl=activeBlocks(l,dow);const B=bl[0]||l.blocks[0];const bi=l.blocks.indexOf(B);
+      return `<div style="padding:14px 18px;${ix?'border-top:1px solid var(--line)':''}"><div class="row" style="cursor:pointer" onclick="go('#/linha/${l.id}')">${badge(l)}<div style="flex:1;min-width:0"><div style="font-weight:700">${esc(l.nome)}</div>${status(l)}</div>${starBtn(l)}</div>
+      ${B.dirs.map((d,di)=>{const nx=d.trips.map(t=>P(l,bi,di,t)).filter(p=>!p.cancel&&p.start>=m-0.5).sort((a,b)=>a.start-b.start).slice(0,5);return `<div style="margin-top:12px"><div class="small muted" style="margin-bottom:6px">${esc(d.name)} · saída de ${esc(d.stops[0])}</div><div class="row" style="gap:6px;flex-wrap:wrap">${nx.length?nx.map((p,i)=>`<span class="tm ${i===0?'next':''} ${isLive(p)?'lv':''}" style="display:inline-grid;place-items:center;width:70px">${fmt(p.start)}</span>`).join(''):'<span class="small muted">Sem mais saídas hoje</span>'}</div></div>`}).join('')}</div>`}).join(''):'<div class="empty">Nenhuma linha favorita. Toque em ☆ numa linha para adicioná-la.</div>';
     $('#alist').innerHTML=S.alerts.length?S.alerts.map(a=>{const l=LINE(a.line);if(!l)return'';return `<div class="li" style="cursor:default">${badge(l)}<div style="flex:1;min-width:0"><div class="nm">${esc(a.stop)} · <span class="mono">${fmt(a.time)}</span></div><div class="small muted">${esc(a.dirName)} · ${a.before} min antes${a.rep?' · repete':''}</div></div>
       <button class="switch ${a.on?'on':''}" aria-label="${a.on?'Desativar':'Ativar'} aviso" onclick="toggleAlert(${a.id})"></button><button class="star" aria-label="Excluir aviso" onclick="delAlert(${a.id})">${ICON.trash}</button></div>`}).join(''):'<div class="empty">Nenhum aviso. Abra uma linha e toque em <b>Avisar quando chegar</b>.</div>';
   };
@@ -825,16 +997,17 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!tinha||recarregou)return;recarregou=true;location.reload()});
 }
 
-/* ================= LOOP ================= */
+/* ================= LAÇO PRINCIPAL ================= */
 let last=Date.now();
 setInterval(()=>{
   const now=Date.now();const dt=(now-last)/1000;last=now;
   if(S.sim.on&&S.sim.speed){S.sim.min+=dt*S.sim.speed/60;if(S.sim.min>=1440){S.sim.min-=1440;S.sim.dow=(S.sim.dow+1)%7;route()}}
+  LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();
   renderClock();checkAlerts();
   if(!$('#modalBg').classList.contains('open'))LIVE();
 },1000);
 setInterval(()=>store.set('sim',S.sim),5000);
-if(DBD.atualizado)$('#fonte').textContent='Horários atualizados pela Fronteira em '+new Date(DBD.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'. Posição dos ônibus estimada.';
+if(DBD.atualizado)$('#fonte').textContent='Horários atualizados pela Fronteira em '+new Date(DBD.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'. Posição dos ônibus estimada, exceto quando indicada como ao vivo.';
 renderClock();route();
 </script>
 </body>

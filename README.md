@@ -19,7 +19,7 @@ Uma única tela que reúne:
 - **Linhas e horários oficiais**, organizados por parada, sentido e dia da semana
 - **Próximo ônibus** com contagem regressiva na parada do passageiro
 - **Como chegar**: linhas diretas entre duas paradas, com saída, chegada e duração
-- **Mapa ao vivo** com a posição dos ônibus no trajeto
+- **Mapa da cidade** com o trajeto pelas ruas e a posição dos ônibus, deixando claro o que é estimativa e o que é informação ao vivo
 - **Favoritos e alertas** ("me avise 5 min antes do ônibus passar na Unipampa")
 
 E uma **área da empresa** para a Fronteira manter tudo atualizado sem depender de programador.
@@ -67,6 +67,20 @@ O site do passageiro pode ser instalado como aplicativo, sem passar por loja:
 
 > O modo offline e a instalação exigem HTTPS (como no GitHub Pages) ou `localhost`. Abrindo o arquivo direto do computador (`file://`), o site funciona, mas sem instalar e sem modo offline.
 
+## Como a previsão funciona
+
+Não há GPS nos ônibus. A previsão de horário e a posição no mapa juntam três fontes, da mais fraca para a mais forte, e o site sempre mostra de onde veio cada informação:
+
+| Fonte | Como aparece | De onde vem |
+|---|---|---|
+| Tabela oficial | "tabela" (cinza) | Horários publicados pela Fronteira |
+| Ajuste por horário | "ajustado" (azul), com o horário da tabela riscado | A empresa informa quantos minutos a mais cada trecho leva em cada faixa do dia (pico da manhã, entrepico, pico da tarde, noite) |
+| Informação ao vivo | "ao vivo · +6 min" (verde/âmbar), com "há X min" | A empresa informa atraso/cancelamento (tela **Tempo real**) ou um passageiro toca em **"O ônibus passou agora"** na parada. As paradas seguintes daquela viagem são corrigidas |
+
+No mapa, o ônibus **verde sólido** tem informação ao vivo; o **tracejado** é a posição estimada. Entre duas paradas, a posição é calculada ao longo do trajeto pelas ruas, proporcional ao tempo.
+
+> Neste protótipo, sem servidor, os atrasos e relatos ficam no navegador de quem os informou. Com o servidor, valem para todos os passageiros.
+
 ## Área da empresa
 
 Painel onde a Fronteira mantém o sistema atualizado. **Acesso de demonstração:** qualquer e-mail e senha entram.
@@ -75,7 +89,9 @@ Painel onde a Fronteira mantém o sistema atualizado. **Acesso de demonstração
 |---|---|
 | **Painel** | Linhas ativas, viagens por dia, gráfico de saídas por hora, pendências (linhas sem horário e horários com erro) e atividade recente |
 | **Linhas** | Cadastrar, editar, excluir e suspender/reativar linhas, com pré-visualização de como aparece no site |
+| **Tempo real** | Informar atraso (−1, +1, +5 min, no horário) e cancelar viagens do dia. Vale na hora, sem publicar. Também mostra os relatos de passageiros para confirmar ou descartar |
 | **Horários** | Editor em planilha: tabelas por dias da semana, sentidos, paradas e viagens. Aceita `7:15`, `715` ou `7.15`, navegação por setas, **colar direto do Excel**, **deslocar horários** (+/- minutos) e **criar o sentido de volta** com as paradas invertidas |
+| **Paradas** | Mapa com todas as paradas. Arraste para corrigir a posição; depois **recalcule os trajetos** pelas ruas (OpenStreetMap) |
 | **Avisos** | Avisos para os passageiros (alerta ou informativo), gerais ou ligados a linhas específicas |
 | **Publicação** | Publicar ou descartar alterações, histórico de quem publicou o quê, backup/importação em JSON, exportação em planilha (.csv) e geração de um novo `dados.js` |
 
@@ -90,8 +106,9 @@ Painel onde a Fronteira mantém o sistema atualizado. **Acesso de demonstração
 | Horários e paradas | ✅ **Reais**, da tabela oficial publicada pela Fronteira (9 linhas, dias úteis e sábado) |
 | Lista das 19 linhas | ✅ **Real** |
 | Linhas sem tabela publicada (Seletivo Passo Novo, C1/C2, linhas de domingo, Especial) | ⚠️ Aparecem como "horários sob consulta" |
-| Posição do ônibus no mapa | 🔶 **Simulada** a partir da tabela (sem GPS) |
-| Mapa | 🔶 Esquemático (desenho do trajeto, não o mapa real da cidade) |
+| Mapa e trajetos | ✅ Mapa real de Alegrete (OpenStreetMap), com o trajeto calculado pelas ruas |
+| Posição das paradas | ⚠️ 23 exatas, 31 aproximadas (centro do bairro/rua) e 12 estimadas. A empresa corrige na tela **Paradas** |
+| Posição do ônibus | 🔶 **Estimada** pela tabela e pelos ajustes. Só aparece como **ao vivo** quando a empresa ou um passageiro informa (sem GPS) |
 | Siglas das linhas (IP, VS…) | 🔶 Criadas pela equipe |
 | Login e publicação da área da empresa | 🔶 Demonstração: sem servidor, dados salvos no navegador |
 
@@ -114,7 +131,9 @@ Resumo do [plano de marketing](docs/marketing.md):
 ## Próximos passos
 
 - [ ] Integrar GPS real dos ônibus (rastreadores da frota ou app do motorista)
-- [ ] Usar o mapa real da cidade com as coordenadas das paradas
+- [x] Mapa real da cidade com trajeto pelas ruas
+- [x] Previsão com ajuste por faixa de horário, atrasos da empresa e relatos de passageiros
+- [ ] Conferir a posição exata de todas as paradas (tela Paradas)
 - [x] Painel administrativo para a empresa cadastrar linhas e editar horários
 - [ ] Servidor com banco de dados e login real para a área da empresa
 - [ ] Horários das linhas que ainda não têm tabela publicada
@@ -138,6 +157,7 @@ expresso-gaucho/
     │   ├── index.html               # Site do passageiro
     │   ├── dados.js                 # Linhas e horários oficiais
     │   ├── db.js                    # Dados compartilhados (oficiais + publicados pela empresa)
+    │   ├── geo.js                   # Posição das paradas e trajetos pelas ruas (OpenStreetMap)
     │   ├── manifest.webmanifest     # Manifesto do app instalável (PWA)
     │   ├── sw.js                    # Service worker: modo offline e atualização
     │   └── icons/                   # Ícones do app
