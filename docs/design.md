@@ -18,17 +18,26 @@ Arquivo com as telas mobile e o guia visual:
 
 O HTML de origem dessas telas está em [`prototipo/mobile/telas.html`](../prototipo/mobile/telas.html).
 
-## Paleta
+## Sistema visual do site (outubro/2026)
+
+O site foi redesenhado para parecer um **quadro de horários de transporte público** e não um template genérico. Princípios:
+
+- **Uma cor de destaque só:** o azul da Fronteira (`#002460`), usado sólido, sem gradientes.
+- **Fundo claro neutro** (`#F4F3EF`) em vez de cinza-azulado, com painéis brancos de borda fina e sem sombras.
+- **Verde e âmbar apenas com função:** verde = "agora / em operação / ônibus ao vivo"; âmbar = aviso ou linha suspensa.
+- **Horários em fonte monoespaçada,** alinhados como num painel de rodoviária (`06:15`).
+- **Sem emojis, exclamações ou textos de enfeite** ("Bom dia! Para onde vamos hoje?").
+- **A tela inicial é o quadro de saídas da sua parada:** a informação mais usada aparece primeiro.
 
 | Token | Cor | Uso |
 |---|---|---|
-| Gradiente | `#002460 → #003580` | Topo, destaques, botão de "próxima saída" |
-| Azul Fronteira | `#002460` | Cor principal, botões, códigos de linha |
-| Azul médio | `#003580` | Links, traçado das rotas |
-| Texto | `#1E293B` | Texto principal |
-| Texto 2 | `#64748B` | Legendas e metadados |
-| Fundo | `#F1F5F9` | Fundo das páginas |
-| Verde | `#15803D` / `#DCFCE7` | Selo "Ativa", "agora", ônibus ao vivo |
-| Âmbar | `#B45309` / `#FEF3C7` | Selo "Seletivo", avisos |
+| Azul Fronteira | `#002460` | Topo, botões, códigos das linhas, horário em destaque |
+| Fundo | `#F4F3EF` | Fundo das páginas |
+| Painel | `#FFFFFF` / borda `#E3E1DA` | Blocos de conteúdo |
+| Texto | `#1D1D1B` / `#5F5E58` | Texto principal e secundário |
+| Verde | `#1D7A45` | Agora, em operação, ônibus no mapa |
+| Âmbar | `#8F5300` / `#FAEFD7` | Avisos e linhas suspensas |
 
-**Fonte:** Segoe UI (a mesma do site da empresa). No Figma foi usada Inter, que é visualmente próxima.
+**Fontes:** [Atkinson Hyperlegible Next](https://fonts.google.com/specimen/Atkinson+Hyperlegible+Next) (texto) e Atkinson Hyperlegible Mono (horários e códigos das linhas). A família foi criada pelo Braille Institute para máxima legibilidade, o que ajuda passageiros com baixa visão e idosos. Sem internet, o app usa as fontes guardadas pelo service worker.
+
+> As telas do Figma são da primeira versão (gradiente azul). O site já usa o sistema acima.
