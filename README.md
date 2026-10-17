@@ -24,6 +24,8 @@ Uma única tela que reúne:
 
 E uma **área da empresa** para a Fronteira manter tudo atualizado sem depender de programador.
 
+O site do passageiro é um **app instalável (PWA)**: funciona no celular como aplicativo e mostra os horários mesmo **sem internet**.
+
 ## Protótipos
 
 | Protótipo | O que é | Como abrir |
@@ -47,6 +49,23 @@ Depois acesse <http://localhost:8766/desktop/> e <http://localhost:8766/admin/>.
 ### Modo demonstração
 
 Clique no **relógio** no canto superior direito para escolher dia e hora, acelerar o tempo (10× ou 60×) ou pausar. Assim a apresentação funciona em qualquer horário, inclusive com ônibus "andando" no mapa.
+
+## App instalável e offline (PWA)
+
+O site do passageiro pode ser instalado como aplicativo, sem passar por loja:
+
+| Aparelho | Como instalar |
+|---|---|
+| **Android / Chrome / Edge** | Toque em **Instalar** no topo do site (ou menu ⋮ → *Instalar app*) |
+| **iPhone / iPad** | No Safari: **Compartilhar** → *Adicionar à Tela de Início* (o botão **Instalar** mostra o passo a passo) |
+| **Computador** | Ícone de instalar na barra de endereço do Chrome/Edge |
+
+- **Funciona offline:** o app, as linhas e os horários ficam guardados no aparelho. Sem internet, aparece um aviso e tudo continua funcionando.
+- **Atualiza sozinho:** com internet, o app busca a versão nova em segundo plano e avisa *"Nova versão disponível"*.
+- **Navegação de app no celular:** barra inferior com Início, Linhas, Como chegar, Mapa e Favoritos.
+- **Atalhos:** pressionando o ícone instalado aparecem atalhos para Linhas, Como chegar e Favoritos (Android).
+
+> O modo offline e a instalação exigem HTTPS (como no GitHub Pages) ou `localhost`. Abrindo o arquivo direto do computador (`file://`), o site funciona, mas sem instalar e sem modo offline.
 
 ## Área da empresa
 
@@ -118,7 +137,10 @@ expresso-gaucho/
     ├── desktop/
     │   ├── index.html               # Site do passageiro
     │   ├── dados.js                 # Linhas e horários oficiais
-    │   └── db.js                    # Dados compartilhados (oficiais + publicados pela empresa)
+    │   ├── db.js                    # Dados compartilhados (oficiais + publicados pela empresa)
+    │   ├── manifest.webmanifest     # Manifesto do app instalável (PWA)
+    │   ├── sw.js                    # Service worker: modo offline e atualização
+    │   └── icons/                   # Ícones do app
     ├── admin/
     │   └── index.html               # Área da empresa
     └── mobile/
