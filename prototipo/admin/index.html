@@ -185,8 +185,9 @@ tr:hover .sc .ops{opacity:1}
     </div>
     <div class="fg"><label class="f">E-mail</label><input class="inp" style="width:100%" id="lgEmail" type="email" value="operacao@fronteira.demo" required></div>
     <div class="fg"><label class="f">Senha</label><input class="inp" style="width:100%" id="lgPass" type="password" value="demonstracao" required></div>
-    <button class="btn" style="width:100%;height:46px;margin-top:6px">Entrar</button>
-    <p class="small muted" style="margin-top:16px;line-height:1.5;border-left:3px solid var(--line-2);padding:2px 0 2px 12px"><b>Acesso de demonstração.</b> Qualquer e-mail e senha entram. Na versão final, o login será feito por um servidor com usuários da empresa.</p>
+    <div id="lgErr" role="alert" class="small" style="display:none;color:var(--red);margin:-4px 0 10px"></div>
+    <button class="btn" id="lgBtn" style="width:100%;height:46px;margin-top:6px">Entrar</button>
+    <p class="small muted" id="lgNota" style="margin-top:16px;line-height:1.5;border-left:3px solid var(--line-2);padding:2px 0 2px 12px"><b>Acesso de demonstração.</b> Qualquer e-mail e senha entram (servidor não configurado).</p>
     <a href="../desktop/" class="small" style="display:block;text-align:center;margin-top:14px;color:var(--navy-700);font-weight:700">← Voltar ao site do passageiro</a>
   </form>
 </div>
@@ -222,6 +223,8 @@ tr:hover .sc .ops{opacity:1}
 <div class="toasts" id="toasts"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../desktop/config.js"></script>
 <script src="../desktop/dados.js"></script>
 <script src="../desktop/geo.js"></script>
 <script src="../desktop/db.js"></script>
@@ -284,9 +287,35 @@ function tripsOnDay(l,dow){
 }
 
 /* ================= LOGIN ================= */
-function doLogin(){const e=$('#lgEmail').value.trim();if(!e)return;ss.set('fronteira:adm',e);boot()}
-function logout(){const go=()=>{ss.del('fronteira:adm');PEND=[];W=clone(DB.load());updBar();boot()};PEND.length?confirmBox('Sair sem publicar?','Você tem alterações não publicadas. Elas serão descartadas.','Sair e descartar',go):go()}
+async function doLogin(){
+  const e=$('#lgEmail').value.trim(),pw=$('#lgPass').value;if(!e)return;
+  const err=m=>{$('#lgErr').textContent=m;$('#lgErr').style.display=m?'':'none'};err('');
+  if(!DB.remoto()){ss.set('fronteira:adm',e);return boot()}
+  $('#lgBtn').disabled=true;$('#lgBtn').textContent='Entrando…';
+  try{
+    const {error}=await DB.cliente().auth.signInWithPassword({email:e,password:pw});
+    if(error)throw new Error(error.message==='Invalid login credentials'?'E-mail ou senha incorretos.':error.message);
+    if(!await ehEquipe()){await DB.cliente().auth.signOut();throw new Error('Este e-mail não faz parte da equipe. Peça para cadastrá-lo na tabela "equipe".')}
+    ss.set('fronteira:adm',e);await DB.sync().catch(()=>{});W=clone(DB.load());PEND=[];boot();
+  }catch(x){err(x.message||'Não foi possível entrar.')}
+  finally{$('#lgBtn').disabled=false;$('#lgBtn').textContent='Entrar'}
+}
+async function ehEquipe(){const r=await DB.cliente().from('equipe').select('email').limit(1);return !r.error&&r.data&&r.data.length>0}
+function logout(){const go=()=>{ss.del('fronteira:adm');if(DB.remoto())DB.cliente().auth.signOut();PEND=[];W=clone(DB.load());updBar();boot()};PEND.length?confirmBox('Sair sem publicar?','Você tem alterações não publicadas. Elas serão descartadas.','Sair e descartar',go):go()}
 function boot(){
+  if(DB.remoto()&&!boot.pronto){
+    boot.pronto=true;
+    $('#lgEmail').value='';$('#lgPass').value='';
+    $('#lgNota').innerHTML='Entre com o e-mail e a senha da equipe cadastrados no servidor.';
+    // sessão já aberta neste navegador?
+    DB.cliente().auth.getSession().then(async r=>{const u=r.data&&r.data.session&&r.data.session.user;
+      if(u&&!ss.get('fronteira:adm')&&await ehEquipe()){ss.set('fronteira:adm',u.email);boot()}});
+    DB.start().then(()=>{if(!PEND.length){W=clone(DB.load());if(ss.get('fronteira:adm'))route()}});
+    DB.onChange(t=>{
+      if(t==='aovivo'&&location.hash.startsWith('#/tempo'))renderRT();
+      if(t==='publicacao'&&!PEND.length){W=clone(DB.load());if(ss.get('fronteira:adm'))route()}
+    });
+  }
   const u=ss.get('fronteira:adm');
   $('#login').style.display=u?'none':'grid';$('#shell').style.display=u?'grid':'none';
   if(u){const nm=u.split('@')[0];$('#whoName').textContent=nm.charAt(0).toUpperCase()+nm.slice(1);$('#avatar').textContent=nm.charAt(0).toUpperCase();route()}
@@ -587,13 +616,14 @@ function saveAviso(i){
 function delAviso(i){const a=W.avisos[i];confirmBox('Excluir aviso?',`O aviso <b>${esc(a.titulo)}</b> será removido.`,'Excluir',()=>{W.avisos.splice(i,1);mark(`Aviso "${a.titulo}" excluído`);vAvisos()})}
 
 /* ================= PUBLICAÇÃO ================= */
-function publish(){
+async function publish(){
   const inv=scanInvalid();
   if(inv.length){E={id:inv[0].l.id,b:inv[0].bi,d:inv[0].di};toast('Corrija os horários antes de publicar',`${inv.reduce((a,x)=>a+x.c,0)} horário(s) inválido(s) em ${inv[0].l.nome}`,true);return go('#/horarios/'+inv[0].l.id)}
   const itens=[...new Set(PEND)];
-  W.log=[{t:Date.now(),usuario:$('#whoName').textContent,itens},...(W.log||[])].slice(0,50);
-  try{DB.save(W)}catch(e){return toast('Não foi possível salvar','O navegador bloqueou o armazenamento local.',true)}
-  W=clone(DB.load());PEND=[];toast('Alterações publicadas','O site do passageiro já mostra a versão nova.');route();
+  const novo=clone(W);novo.log=[{t:Date.now(),usuario:$('#whoName').textContent,itens},...(W.log||[])].slice(0,50);
+  document.querySelectorAll('.btn.green').forEach(b=>{b.disabled=true;b.textContent='Publicando…'});
+  try{await DB.save(novo)}catch(e){updBar();route();return toast('Não foi possível publicar',DB.remoto()?(e.message||'Verifique a internet e o login.'):'O navegador bloqueou o armazenamento local.',true)}
+  W=clone(DB.load());PEND=[];toast('Alterações publicadas',DB.remoto()?'Já está no servidor e vale para todos os passageiros.':'O site do passageiro neste navegador já mostra a versão nova.');route();
 }
 function discard(){confirmBox('Descartar alterações?','Tudo o que foi editado desde a última publicação será perdido.','Descartar',()=>{W=clone(DB.load());PEND=[];toast('Alterações descartadas','');route()})}
 function vPub(){
@@ -606,8 +636,8 @@ function vPub(){
     </div>
     <div class="card"><h2 style="margin-bottom:12px">Situação do site</h2>
       <div class="row" style="margin-bottom:10px"><span class="tag ${W.origem==='editado'?'t-urb':'t-ativa'}">${W.origem==='editado'?'Usando dados da empresa':'Usando dados oficiais'}</span></div>
-      <p class="small muted" style="line-height:1.6">${W.atualizado?'Última publicação em '+new Date(W.atualizado).toLocaleString('pt-BR',{dateStyle:'long',timeStyle:'short'})+'.':'O site ainda mostra a tabela oficial original.'}<br>Neste protótipo os dados ficam salvos <b>neste navegador</b>. Na versão final, ficarão em um servidor e valerão para todos os passageiros.</p>
-      <button class="btn danger sm" style="margin-top:14px" onclick="confirmBox('Restaurar dados oficiais?','Todas as linhas, horários e avisos voltam para a tabela oficial original. Faça um backup antes, se quiser guardar as alterações.','Restaurar',()=>{DB.reset();W=clone(DB.load());PEND=[];toast('Dados oficiais restaurados','');route()})">Restaurar dados oficiais</button>
+      <p class="small muted" style="line-height:1.6">${W.atualizado?'Última publicação em '+new Date(W.atualizado).toLocaleString('pt-BR',{dateStyle:'long',timeStyle:'short'})+'.':'O site ainda mostra a tabela oficial original.'}<br>${DB.remoto()?'Conectado ao <b>servidor</b> (Supabase): o que você publica vale para todos os passageiros, e cada publicação fica guardada como uma versão.':'<b>Modo local</b>: os dados ficam salvos neste navegador. Configure o servidor em <code>prototipo/desktop/config.js</code> para valer para todos.'}</p>
+      <button class="btn danger sm" style="margin-top:14px" onclick="confirmBox('Restaurar dados oficiais?','Todas as linhas, horários e avisos voltam para a tabela oficial original. Faça um backup antes, se quiser guardar as alterações.','Restaurar',()=>{DB.reset().then(()=>{W=clone(DB.load());PEND=[];toast('Dados oficiais restaurados','');route()}).catch(e=>toast('Não foi possível restaurar',e.message||'',true))})">Restaurar dados oficiais</button>
     </div>
   </div>
   <div class="card"><h2 style="margin-bottom:6px">Backup e exportação</h2><p class="small muted" style="margin-bottom:16px">Exporta o que está <b>publicado</b>. Use o backup para levar os dados para outro computador ou para a versão final do sistema.</p>
@@ -693,15 +723,16 @@ function renderRT(){
       const info=!lv?'<span class="small muted">nenhuma (o site usa a tabela)</span>':lv.cancel?'<span class="tag t-red">Cancelada</span>':`<span class="tag ${lv.delay>2?'t-sel':'t-ativa'}">${lv.delay>0?'+'+lv.delay+' min':lv.delay<0?lv.delay+' min':'no horário'}</span> <span class="small muted">${lv.src==='passageiro'?'relato de passageiro':'empresa'} · há ${Math.max(0,Math.round(m-lv.min))} min</span>`;
       return `<tr><td><div class="row">${codeBox(t.l)}<span style="font-weight:600">${esc(t.d.dir)}</span></div></td><td class="mono">${fmt(t.start)} → ${fmt(t.end)}</td><td>${sit}</td><td>${info}</td>
       <td><div class="row" style="justify-content:flex-end;gap:4px;flex-wrap:wrap">${lv&&lv.cancel?`<button class="btn ghost sm" onclick="rtClear('${t.key}')">Desfazer cancelamento</button>`:`<button class="btn ghost sm" title="1 min mais cedo" onclick="rtDelay('${t.key}',-1)">−1</button><button class="btn ghost sm" title="1 min de atraso" onclick="rtDelay('${t.key}',1)">+1</button><button class="btn ghost sm" title="5 min de atraso" onclick="rtDelay('${t.key}',5)">+5</button><button class="btn ghost sm" onclick="rtSet('${t.key}',0)">No horário</button><button class="btn danger sm" onclick="rtCancel('${t.key}')">Cancelar</button>`}${lv&&!lv.cancel?`<button class="iconbtn" title="Remover informação" onclick="rtClear('${t.key}')">${ICO.x}</button>`:''}</div></td></tr>`}).join('')}</tbody></table>`:'<div class="empty">Nenhuma viagem em andamento ou saindo nos próximos 30 min.</div>';
-  const rel=Object.entries(live).filter(([k,v])=>v.src==='passageiro');
+  const rel=DB.relatos(n).map(r=>[r.key,r]);
   $('#rtRel').innerHTML=rel.length?rel.map(([k,v])=>{const t=todas.find(x=>x.key===k);if(!t)return'';return `<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)">${codeBox(t.l)}<div style="flex:1;min-width:0"><b>${esc(t.d.dir)}</b> · saída <span class="mono">${fmt(t.start)}</span><div class="small muted">Passageiro viu passar em ${esc(t.d.rows[v.from]?t.d.rows[v.from][0]:'')}: ${v.delay>0?v.delay+' min atrasado':v.delay<0?(-v.delay)+' min adiantado':'no horário'} · há ${Math.max(0,Math.round(m-v.min))} min</div></div><button class="btn ghost sm" onclick="rtConfirm('${k}')">Confirmar</button><button class="btn danger sm" onclick="rtClear('${k}')">Descartar</button></div>`}).join(''):'<div class="empty small">Nenhum relato hoje.</div>';
 }
 const rtGet=k=>DB.loadLive(DB.now())[k];
-function rtSet(k,delay){const lv=rtGet(k);DB.setLive(k,{delay,from:lv&&lv.from||0,src:'empresa',min:DB.now().min},DB.now());renderRT()}
+const rtErro=e=>{toast('Não foi possível salvar',e&&e.message||'Verifique a internet e o login.',true);renderRT()};
+function rtSet(k,delay){const lv=rtGet(k);DB.setLive(k,{delay,from:lv&&lv.from||0,src:'empresa',min:DB.now().min},DB.now()).then(renderRT,rtErro);renderRT()}
 function rtDelay(k,d){const lv=rtGet(k);rtSet(k,(lv&&!lv.cancel?lv.delay:0)+d)}
-function rtCancel(k){confirmBox('Cancelar viagem?','O site vai mostrar a viagem como <b>cancelada</b>, e ela deixa de aparecer como próxima saída.','Cancelar viagem',()=>{DB.setLive(k,{cancel:true,src:'empresa',min:DB.now().min},DB.now());toast('Viagem cancelada','O site do passageiro já mostra.');renderRT()})}
-function rtClear(k){DB.setLive(k,null,DB.now());renderRT()}
-function rtConfirm(k){const lv=rtGet(k);if(!lv)return;DB.setLive(k,{...lv,src:'empresa',min:DB.now().min},DB.now());toast('Relato confirmado','Agora aparece como informado pela empresa.');renderRT()}
+function rtCancel(k){confirmBox('Cancelar viagem?','O site vai mostrar a viagem como <b>cancelada</b>, e ela deixa de aparecer como próxima saída.','Cancelar viagem',()=>{DB.setLive(k,{cancel:true,src:'empresa',min:DB.now().min},DB.now()).then(()=>{toast('Viagem cancelada','O site do passageiro já mostra.');renderRT()},rtErro)})}
+function rtClear(k){Promise.all([DB.setLive(k,null,DB.now()),DB.descartarRelatos(k,DB.now())]).then(renderRT,rtErro)}
+function rtConfirm(k){const r=DB.relatos(DB.now()).find(x=>x.key===k);if(!r)return;DB.setLive(k,{delay:r.delay,from:r.from,src:'empresa',min:DB.now().min},DB.now()).then(()=>DB.descartarRelatos(k,DB.now())).then(()=>{toast('Relato confirmado','Agora aparece como informado pela empresa.');renderRT()},rtErro)}
 
 /* ================= PARADAS ================= */
 let PQ='',PF='conf',PSEL=null;const CHG=new Set();

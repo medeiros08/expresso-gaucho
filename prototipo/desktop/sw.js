@@ -2,12 +2,13 @@
 // Guarda o app e os horários no aparelho para funcionar sem internet.
 // Estratégia: mostra a cópia salva na hora e, se houver internet, busca a versão
 // nova em segundo plano (stale-while-revalidate). Troque VERSAO ao mudar a lista abaixo.
-const VERSAO = 'fronteira-v3';
+const VERSAO = 'fronteira-v4';
 const ARQUIVOS = [
   './',
   './index.html',
   './dados.js',
   './db.js',
+  './config.js',
   './geo.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
@@ -34,7 +35,7 @@ self.addEventListener('message', e => {
 });
 
 // Arquivos externos que não mudam (fontes e biblioteca do mapa): guarda na primeira vez.
-const FONTES = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'];
+const FONTES = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'];
 
 self.addEventListener('fetch', e => {
   const req = e.request;

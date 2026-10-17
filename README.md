@@ -79,7 +79,7 @@ Não há GPS nos ônibus. A previsão de horário e a posição no mapa juntam t
 
 No mapa, o ônibus **verde sólido** tem informação ao vivo; o **tracejado** é a posição estimada. Entre duas paradas, a posição é calculada ao longo do trajeto pelas ruas, proporcional ao tempo.
 
-> Neste protótipo, sem servidor, os atrasos e relatos ficam no navegador de quem os informou. Com o servidor, valem para todos os passageiros.
+> Com o servidor (Supabase) configurado, atrasos, cancelamentos e relatos valem para todos e chegam em tempo real. Sem ele, ficam no navegador de quem os informou. Veja [Servidor](docs/servidor.md).
 
 ## Área da empresa
 
@@ -97,7 +97,7 @@ Painel onde a Fronteira mantém o sistema atualizado. **Acesso de demonstração
 
 **Como funciona:** as edições ficam em rascunho até a empresa clicar em **Publicar no site**. Antes de publicar, o painel confere todos os horários e bloqueia a publicação se algum estiver inválido ou fora de ordem (por exemplo, chegar numa parada antes de passar pela anterior). Ao publicar, o site do passageiro é atualizado na hora, inclusive em outra aba aberta.
 
-> ⚠️ Neste protótipo os dados publicados ficam salvos **no navegador** de quem usou o painel. Na versão final, o login e os dados ficarão em um servidor e valerão para todos os passageiros.
+> O sistema funciona em dois modos. **Sem servidor** (padrão), o login é de demonstração e os dados ficam no navegador. **Com o Supabase** configurado ([guia de 10 minutos](docs/servidor.md)), o login é real, só e-mails da equipe publicam, cada publicação vira uma versão no banco, e tudo vale para todos os passageiros em tempo real.
 
 ### O que é real e o que é simulado
 
@@ -110,7 +110,7 @@ Painel onde a Fronteira mantém o sistema atualizado. **Acesso de demonstração
 | Posição das paradas | ⚠️ 23 exatas, 31 aproximadas (centro do bairro/rua) e 12 estimadas. A empresa corrige na tela **Paradas** |
 | Posição do ônibus | 🔶 **Estimada** pela tabela e pelos ajustes. Só aparece como **ao vivo** quando a empresa ou um passageiro informa (sem GPS) |
 | Siglas das linhas (IP, VS…) | 🔶 Criadas pela equipe |
-| Login e publicação da área da empresa | 🔶 Demonstração: sem servidor, dados salvos no navegador |
+| Login e publicação da área da empresa | ✅ Reais com o Supabase configurado · 🔶 demonstração no modo local |
 
 ## Modelo de negócio
 
@@ -135,7 +135,7 @@ Resumo do [plano de marketing](docs/marketing.md):
 - [x] Previsão com ajuste por faixa de horário, atrasos da empresa e relatos de passageiros
 - [ ] Conferir a posição exata de todas as paradas (tela Paradas)
 - [x] Painel administrativo para a empresa cadastrar linhas e editar horários
-- [ ] Servidor com banco de dados e login real para a área da empresa
+- [x] Servidor com banco de dados, login real e tempo real (Supabase) — falta criar o projeto e preencher `config.js` ([guia](docs/servidor.md))
 - [ ] Horários das linhas que ainda não têm tabela publicada
 - [ ] QR Code nas placas das paradas abrindo a tela daquela parada
 - [ ] Alertas pelo WhatsApp
@@ -151,12 +151,16 @@ expresso-gaucho/
 │   ├── analise-360.md               # Análise 360° (parte da equipe)
 │   ├── marketing.md                 # Plano de marketing (parte da equipe)
 │   ├── design.md                    # Identidade visual, paleta e link do Figma
+│   ├── servidor.md                  # Como configurar o Supabase
 │   └── analise-360-e-marketing.pdf  # Documento original
+├── supabase/
+│   └── schema.sql                   # Tabelas e regras de acesso do banco
 └── prototipo/
     ├── desktop/
     │   ├── index.html               # Site do passageiro
     │   ├── dados.js                 # Linhas e horários oficiais
-    │   ├── db.js                    # Dados compartilhados (oficiais + publicados pela empresa)
+    │   ├── config.js                # Endereço e chave pública do Supabase (vazio = modo local)
+    │   ├── db.js                    # Dados: modo local ou servidor (Supabase), com tempo real
     │   ├── geo.js                   # Posição das paradas e trajetos pelas ruas (OpenStreetMap)
     │   ├── manifest.webmanifest     # Manifesto do app instalável (PWA)
     │   ├── sw.js                    # Service worker: modo offline e atualização
