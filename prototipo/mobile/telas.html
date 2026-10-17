@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Fronteira – App de Linhas e Horários</title>
+<style>
+  :root{
+    --navy-900:#0D1B35; --navy-800:#002460; --navy-700:#003580; --navy-50:#E8EEF8;
+    --slate-900:#1E293B; --slate-500:#64748B; --slate-300:#CBD5E1; --slate-200:#E2E8F0; --slate-100:#F1F5F9;
+    --green-600:#15803D; --green-100:#DCFCE7; --amber-600:#B45309; --amber-100:#FEF3C7; --red-600:#DC2626;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter, "Segoe UI", system-ui, sans-serif;background:#D9DEE7;padding:40px;display:flex;gap:40px;align-items:flex-start;color:var(--slate-900)}
+  .frame{width:390px;height:844px;background:var(--slate-100);position:relative;overflow:hidden;display:flex;flex-direction:column;flex-shrink:0}
+  .status{height:44px;display:flex;justify-content:space-between;align-items:center;padding:0 24px;font-size:15px;font-weight:600;color:#fff}
+  .status.dark{color:var(--slate-900)}
+  .hero{background:linear-gradient(135deg,#002460 0%,#003580 100%);color:#fff}
+  .hero-inner{padding:8px 20px 24px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center}
+  .brand-name{font-size:18px;font-weight:800;letter-spacing:-.2px}
+  .brand-sub{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;letter-spacing:.6px;text-transform:uppercase}
+  .row{display:flex;align-items:center}
+  .between{justify-content:space-between}
+  .city{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+  .muted-w{color:rgba(255,255,255,.72);font-size:14px}
+  .search{margin-top:18px;background:#fff;border-radius:14px;height:50px;display:flex;align-items:center;gap:10px;padding:0 16px;color:var(--slate-500);font-size:15px;box-shadow:0 8px 24px rgba(0,20,60,.25)}
+  .content{padding:20px;display:flex;flex-direction:column;gap:14px;flex:1}
+  .section-title{display:flex;justify-content:space-between;align-items:center}
+  .section-title h2{font-size:17px;font-weight:700}
+  .link{font-size:13px;font-weight:600;color:var(--navy-700)}
+  .card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.06),0 4px 12px rgba(15,23,42,.04);border:1px solid var(--slate-200)}
+  .badge-line{min-width:48px;height:48px;border-radius:12px;background:var(--navy-800);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+  .badge-line.sel{background:#fff;color:var(--navy-800);border:2px solid var(--navy-800)}
+  .tag{font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;letter-spacing:.4px}
+  .tag.ativa{background:var(--green-100);color:var(--green-600)}
+  .tag.urb{background:var(--navy-50);color:var(--navy-700)}
+  .tag.sel{background:var(--amber-100);color:var(--amber-600)}
+  .t-title{font-size:15px;font-weight:700;color:var(--slate-900)}
+  .t-sub{font-size:13px;color:var(--slate-500)}
+  .eta{text-align:right}
+  .eta b{display:block;font-size:22px;font-weight:800;color:var(--navy-800);line-height:1}
+  .eta span{font-size:11px;color:var(--slate-500);font-weight:600}
+  .chips{display:flex;gap:8px}
+  .chip{padding:8px 16px;border-radius:999px;border:1px solid var(--slate-300);background:#fff;font-size:14px;font-weight:600;color:var(--slate-500)}
+  .chip.on{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+  .tabbar{height:84px;background:#fff;border-top:1px solid var(--slate-200);display:flex;justify-content:space-around;padding-top:10px}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--slate-500);width:70px}
+  .tab.on{color:var(--navy-800)}
+  .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .q{background:#fff;border:1px solid var(--slate-200);border-radius:14px;height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:600;color:var(--slate-900)}
+  .q .ic{width:36px;height:36px;border-radius:10px;background:var(--navy-50);display:flex;align-items:center;justify-content:center}
+  .alert{background:var(--amber-100);border:1px solid #FCD34D;border-radius:14px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start;font-size:13px;color:#78350F}
+  .topbar{padding:4px 20px 18px;display:flex;align-items:center;gap:12px}
+  .iconbtn{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center}
+  .seg{display:flex;background:rgba(255,255,255,.12);border-radius:12px;padding:4px;margin-top:16px}
+  .seg div{flex:1;text-align:center;padding:9px 0;border-radius:9px;font-size:13px;font-weight:600;color:rgba(255,255,255,.75)}
+  .seg .on{background:#fff;color:var(--navy-800)}
+  .days{display:flex;gap:8px}
+  .next{background:linear-gradient(135deg,#002460 0%,#003580 100%);color:#fff;border-radius:18px;padding:18px;display:flex;justify-content:space-between;align-items:center}
+  .grid-times{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .tm{height:40px;border-radius:10px;background:#fff;border:1px solid var(--slate-200);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--slate-900)}
+  .tm.past{color:var(--slate-300);background:var(--slate-100)}
+  .tm.now{background:var(--navy-800);color:#fff;border-color:var(--navy-800)}
+  .stops{position:relative;padding-left:4px}
+  .stop{display:flex;align-items:center;gap:14px;height:38px;position:relative}
+  .dot{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--navy-700);z-index:2;flex-shrink:0}
+  .dot.end{background:var(--navy-700)}
+  .vline{position:absolute;left:10px;top:22px;bottom:22px;width:2px;background:var(--navy-700);opacity:.35}
+  .stop .nm{flex:1;font-size:14px;font-weight:600}
+  .stop .hr{font-size:14px;font-weight:700;color:var(--navy-800)}
+  .map{flex:1;position:relative;background:#E7ECE4;overflow:hidden}
+  .sheet{background:#fff;border-radius:24px 24px 0 0;padding:12px 20px 20px;box-shadow:0 -8px 30px rgba(15,23,42,.15);position:relative;z-index:5}
+  .grab{width:40px;height:5px;border-radius:3px;background:var(--slate-300);margin:0 auto 14px}
+  .pill-live{display:inline-flex;align-items:center;gap:6px;background:var(--green-100);color:var(--green-600);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green-600)}
+  .btn{height:50px;border-radius:14px;background:var(--navy-800);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn.ghost{background:#fff;color:var(--navy-800);border:1.5px solid var(--navy-800)}
+  .swatch{width:100%;height:70px;border-radius:12px}
+  .guide{width:820px;height:844px;background:#fff;padding:48px;display:flex;flex-direction:column;gap:28px;flex-shrink:0}
+  .gh{font-size:12px;font-weight:700;color:var(--slate-500);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<!-- ============ 0. GUIA VISUAL ============ -->
+<div class="guide frame" style="width:820px;background:#fff" id="guia">
+  <div class="row" style="gap:14px">
+    <div class="logo" style="background:linear-gradient(135deg,#002460,#003580);width:56px;height:56px;border-radius:16px">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/><path d="M8 7h8"/></svg>
+    </div>
+    <div>
+      <div style="font-size:28px;font-weight:800;color:#002460;letter-spacing:-.5px">Fronteira Transportes</div>
+      <div style="font-size:15px;color:#64748B">Guia visual · App de Linhas e Horários · Proposta de parceria</div>
+    </div>
+  </div>
+  <div>
+    <div class="gh">Cores da marca (extraídas do site oficial)</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px">
+      <div><div class="swatch" style="background:linear-gradient(135deg,#002460,#003580)"></div><div class="t-title" style="font-size:13px;margin-top:8px">Gradiente</div><div class="t-sub" style="font-size:12px">#002460 → #003580</div></div>
+      <div><div class="swatch" style="background:#002460"></div><div class="t-title" style="font-size:13px;margin-top:8px">Azul Fronteira</div><div class="t-sub" style="font-size:12px">#002460</div></div>
+      <div><div class="swatch" style="background:#003580"></div><div class="t-title" style="font-size:13px;margin-top:8px">Azul Médio</div><div class="t-sub" style="font-size:12px">#003580</div></div>
+      <div><div class="swatch" style="background:#1E293B"></div><div class="t-title" style="font-size:13px;margin-top:8px">Texto</div><div class="t-sub" style="font-size:12px">#1E293B</div></div>
+      <div><div class="swatch" style="background:#64748B"></div><div class="t-title" style="font-size:13px;margin-top:8px">Texto 2</div><div class="t-sub" style="font-size:12px">#64748B</div></div>
+      <div><div class="swatch" style="background:#F1F5F9;border:1px solid #E2E8F0"></div><div class="t-title" style="font-size:13px;margin-top:8px">Fundo</div><div class="t-sub" style="font-size:12px">#F1F5F9</div></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+    <div>
+      <div class="gh">Tipografia</div>
+      <div style="font-size:30px;font-weight:800;letter-spacing:-.5px">Linhas em Operação</div>
+      <div style="font-size:17px;font-weight:700;margin-top:8px">Título de seção · Bold 17</div>
+      <div style="font-size:15px;margin-top:8px;color:#1E293B">Texto de apoio · Regular 15</div>
+      <div style="font-size:13px;margin-top:8px;color:#64748B">Legenda e metadados · Regular 13</div>
+    </div>
+    <div>
+      <div class="gh">Componentes</div>
+      <div class="chips" style="margin-bottom:14px"><div class="chip on">Todas</div><div class="chip">Urbanas</div><div class="chip">Seletivo</div></div>
+      <div class="row" style="gap:8px;margin-bottom:14px"><span class="tag ativa">ATIVA</span><span class="tag urb">URBANA</span><span class="tag sel">SELETIVO</span></div>
+      <div class="row" style="gap:10px"><div class="btn" style="flex:1">Ver horários</div><div class="btn ghost" style="flex:1">Favoritar</div></div>
+    </div>
+  </div>
+  <div>
+    <div class="gh">Fluxo do passageiro</div>
+    <div class="row" style="gap:10px;font-size:14px;font-weight:600;color:#002460">
+      <div class="card" style="padding:12px 16px">1 · Início</div>→
+      <div class="card" style="padding:12px 16px">2 · Linhas</div>→
+      <div class="card" style="padding:12px 16px">3 · Horários</div>→
+      <div class="card" style="padding:12px 16px">4 · Ao vivo no mapa</div>→
+      <div class="card" style="padding:12px 16px">5 · Favoritos e alertas</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 1. INÍCIO ============ -->
+<div class="frame" id="inicio">
+  <div class="hero">
+    <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+    <div class="hero-inner">
+      <div class="row between">
+        <div class="brand">
+          <div class="logo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/><path d="M8 7h8"/></svg></div>
+          <div><div class="brand-name">Fronteira</div><div class="brand-sub">Transportes</div></div>
+        </div>
+        <div class="city"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Alegrete</div>
+      </div>
+      <h1 style="margin-top:22px">Bom dia! 👋<br>Para onde vamos hoje?</h1>
+      <div class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar linha, bairro ou parada…</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="quick">
+      <div class="q"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg></div>Linhas</div>
+      <div class="q"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>Horários</div>
+      <div class="q"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></div>Mapa</div>
+      <div class="q"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg></div>Cartão</div>
+    </div>
+    <div class="alert"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2.2"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg><div><b>Aviso:</b> domingo as linhas operam em horário especial (Domingo João XXIII, Piola e Vera Cruz).</div></div>
+    <div class="section-title"><h2>Próximos ônibus perto de você</h2><span class="link">Ver todos</span></div>
+    <div class="card row" style="gap:14px">
+      <div class="badge-line">IP</div>
+      <div style="flex:1"><div class="t-title">Ibirapuitã → Polivalente</div><div class="t-sub">Parada Unipampa · 120 m</div></div>
+      <div class="eta"><b>4</b><span>min</span></div>
+    </div>
+    <div class="card row" style="gap:14px">
+      <div class="badge-line">VN</div>
+      <div style="flex:1"><div class="t-title">Piola → Vila Nova</div><div class="t-sub">Parada Terminal · 350 m</div></div>
+      <div class="eta"><b>11</b><span>min</span></div>
+    </div>
+    <div class="card row" style="gap:14px">
+      <div class="badge-line">NB</div>
+      <div style="flex:1"><div class="t-title">Terminal → Nova Brasília</div><div class="t-sub">Parada Praça Nova · 500 m</div></div>
+      <div class="eta"><b>18</b><span>min</span></div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002460" stroke-width="2"><path d="M3 11 12 4l9 7v9H3z"/></svg>Início</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/></svg>Mapa</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Favoritos</div>
+  </div>
+</div>
+
+<!-- ============ 2. LINHAS ============ -->
+<div class="frame" id="linhas">
+  <div class="hero">
+    <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+    <div class="hero-inner" style="padding-bottom:20px">
+      <div class="row between"><h1>Linhas em Operação</h1><div class="city">Alegrete</div></div>
+      <div class="muted-w" style="margin-top:6px">19 linhas ativas no momento</div>
+      <div class="search" style="box-shadow:none"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar por nome ou bairro…</div>
+    </div>
+  </div>
+  <div class="content" style="gap:12px">
+    <div class="chips"><div class="chip on">Todas · 19</div><div class="chip">Urbanas · 16</div><div class="chip">Seletivo · 3</div></div>
+    <div class="card row" style="gap:14px">
+      <div class="badge-line">IP</div>
+      <div style="flex:1"><div class="row" style="gap:6px;margin-bottom:4px"><span class="tag urb">URBANA</span><span class="tag ativa">ATIVA</span></div><div class="t-title">Ibirapuitã – Polivalente</div><div class="t-sub">Seg a Sáb · próxima 9:45</div></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#002460" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" fill="#002460"/></svg>
+    </div>
+    <div class="card row" style="gap:14px">
+      <div class="badge-line">JN</div>
+      <div style="flex:1"><div class="row" style="gap:6px;margin-bottom:4px"><span class="tag urb">URBANA</span><span class="tag ativa">ATIVA</span></div><div class="t-title">João XXIII – Nova Brasília</div><div class="t-sub">Seg a Sex · próxima 9:50</div></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
+    </div>
+    <div class="card row" style="gap:14px">
+      <div class="badge-line">VC</div>
+      <div style="flex:1"><div class="row" style="gap:6px;margin-bottom:4px"><span class="tag urb">URBANA</span><span class="tag ativa">ATIVA</span></div><div class="t-title">Vera Cruz – Santos Dumont</div><div class="t-sub">Seg a Sáb · próxima 10:05</div></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
+    </div>
+    <div class="card row" style="gap:14px">
+      <div class="badge-line sel">R1</div>
+      <div style="flex:1"><div class="row" style="gap:6px;margin-bottom:4px"><span class="tag sel">SELETIVO</span><span class="tag ativa">ATIVA</span></div><div class="t-title">Alegrete x Passo Novo – Rota 1</div><div class="t-sub">Interior · próxima 12:00</div></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
+    </div>
+      </div>
+  <div class="tabbar">
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M3 11 12 4l9 7v9H3z"/></svg>Início</div>
+    <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002460" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/></svg>Mapa</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Favoritos</div>
+  </div>
+</div>
+
+<!-- ============ 3. HORÁRIOS ============ -->
+<div class="frame" id="horarios">
+  <div class="hero">
+    <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+    <div class="topbar">
+      <div class="iconbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg></div>
+      <div style="flex:1"><div class="muted-w" style="font-size:12px;font-weight:600;letter-spacing:.6px">LINHA URBANA</div><div style="font-size:19px;font-weight:800">Ibirapuitã – Polivalente</div></div>
+      <div class="iconbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></div>
+    </div>
+    <div style="padding:0 20px 20px">
+      <div class="seg" style="margin-top:0"><div class="on">Ibirapuitã → Polivalente</div><div>Polivalente → Ibirapuitã</div></div>
+    </div>
+  </div>
+  <div class="content" style="gap:14px">
+    <div class="days"><div class="chip on">Seg–Sex</div><div class="chip">Sábado</div><div class="chip">Domingo</div></div>
+    <div class="next">
+      <div><div style="font-size:12px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:.6px">PRÓXIMA SAÍDA · UNIPAMPA</div><div style="font-size:34px;font-weight:800;margin-top:2px">10:22</div><div style="font-size:13px;color:rgba(255,255,255,.75)">Chega no Polivalente às 10:45</div></div>
+      <div style="text-align:center;background:rgba(255,255,255,.14);border-radius:14px;padding:10px 14px"><div style="font-size:26px;font-weight:800">41</div><div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.75)">min</div></div>
+    </div>
+    <div class="section-title"><h2>Saídas do dia</h2><span class="t-sub">Parada: Unipampa ▾</span></div>
+    <div class="grid-times">
+      <div class="tm past">6:22</div><div class="tm past">7:22</div><div class="tm past">8:22</div><div class="tm past">9:22</div><div class="tm now">10:22</div>
+      <div class="tm">11:22</div><div class="tm">12:22</div><div class="tm">13:22</div><div class="tm">14:22</div><div class="tm">15:22</div>
+      <div class="tm">16:22</div><div class="tm">17:22</div><div class="tm">18:22</div><div class="tm">19:22</div><div class="tm" style="border-style:dashed;color:#64748B">—</div>
+    </div>
+    <div class="section-title" style="margin-top:4px"><h2>Itinerário · saída 10:22</h2></div>
+    <div class="card" style="padding:10px 16px">
+      <div class="stops">
+        <div class="vline"></div>
+        <div class="stop"><div class="dot end"></div><div class="nm">Unipampa</div><div class="hr">10:22</div></div>
+        <div class="stop"><div class="dot"></div><div class="nm">Terminal</div><div class="hr">10:26</div></div>
+        <div class="stop"><div class="dot"></div><div class="nm">Mercado União</div><div class="hr">10:30</div></div>
+        <div class="stop"><div class="dot"></div><div class="nm">Praça Nova</div><div class="hr">10:32</div></div>
+        <div class="stop"><div class="dot end"></div><div class="nm">Polivalente</div><div class="hr">10:45</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4. MAPA AO VIVO ============ -->
+<div class="frame" id="mapa">
+  <div class="map">
+    <svg width="390" height="560" viewBox="0 0 390 560" style="position:absolute;top:0;left:0">
+      <rect width="390" height="560" fill="#E9EEE6"/>
+      <rect x="250" y="30" width="120" height="90" rx="10" fill="#D3E6C8"/>
+      <rect x="20" y="380" width="110" height="80" rx="10" fill="#D3E6C8"/>
+      <path d="M0 140 Q120 120 200 170 T390 200" stroke="#BFD9EE" stroke-width="22" fill="none"/>
+      <g stroke="#fff" stroke-width="14" stroke-linecap="round"><path d="M40 0v560M150 0v560M270 0v560M0 70h390M0 260h390M0 340h390M0 480h390"/></g>
+      <g stroke="#F8FAFC" stroke-width="6"><path d="M95 0v560M210 0v560M330 0v560M0 410h390"/></g>
+      <path d="M40 520 L40 340 L150 340 L150 260 L270 260 L270 70 L340 70" stroke="#003580" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M40 520 L40 340 L150 340 L150 300" stroke="#002460" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".35"/>
+      <g fill="#fff" stroke="#003580" stroke-width="3"><circle cx="40" cy="520" r="7"/><circle cx="40" cy="340" r="6"/><circle cx="150" cy="340" r="6"/><circle cx="270" cy="260" r="6"/><circle cx="270" cy="70" r="6"/></g>
+      <circle cx="340" cy="70" r="9" fill="#003580"/>
+      <circle cx="150" cy="300" r="22" fill="#003580" opacity=".15"/>
+      <rect x="134" y="284" width="32" height="32" rx="9" fill="#002460"/>
+      <g stroke="#fff" stroke-width="2" fill="none"><rect x="141" y="290" width="18" height="15" rx="3"/><path d="M141 298h18"/></g>
+      <circle cx="270" cy="260" r="11" fill="#15803D" opacity=".2"/><circle cx="270" cy="260" r="6" fill="#15803D"/>
+    </svg>
+    <div style="position:absolute;top:0;left:0;right:0">
+      <div class="status dark"><span>9:41</span><span>●●● 5G ▮</span></div>
+      <div style="padding:6px 16px;display:flex;gap:10px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.15)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#002460" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg></div>
+        <div style="flex:1;height:44px;border-radius:12px;background:#fff;display:flex;align-items:center;gap:10px;padding:0 14px;box-shadow:0 4px 12px rgba(15,23,42,.15);font-size:14px;font-weight:600"><div class="badge-line" style="min-width:28px;height:28px;border-radius:8px;font-size:11px">IP</div>Ibirapuitã → Polivalente</div>
+      </div>
+    </div>
+    <div style="position:absolute;left:176px;top:276px;background:#fff;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700;color:#002460;box-shadow:0 4px 12px rgba(15,23,42,.18)">Ônibus 1042 · Daer</div>
+    <div style="position:absolute;left:286px;top:240px;background:#15803D;color:#fff;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700">Você · Praça Nova</div>
+  </div>
+  <div class="sheet">
+    <div class="grab"></div>
+    <div class="row between"><span class="pill-live"><span class="live-dot"></span>AO VIVO</span><span class="t-sub">Atualizado há 10 s</span></div>
+    <div class="row between" style="margin-top:14px">
+      <div><div class="t-sub">Chega na sua parada (Praça Nova) em</div><div style="font-size:34px;font-weight:800;color:#002460;line-height:1.1">6 min</div><div class="t-sub">Previsão 10:32 · no horário</div></div>
+      <div class="badge-line" style="width:64px;height:64px;border-radius:16px;font-size:18px">IP</div>
+    </div>
+    <div style="height:8px;border-radius:4px;background:#E2E8F0;margin:16px 0 6px;position:relative"><div style="width:62%;height:8px;border-radius:4px;background:linear-gradient(90deg,#002460,#003580)"></div></div>
+    <div class="row between t-sub" style="font-size:12px"><span>Unipampa</span><span>Daer</span><span>Polivalente</span></div>
+    <div class="row" style="gap:10px;margin-top:16px">
+      <div class="btn" style="flex:1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg>Avisar quando chegar</div>
+      <div class="btn ghost" style="width:54px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#002460" stroke-width="2"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="m16 6-4-4-4 4M12 2v13"/></svg></div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M3 11 12 4l9 7v9H3z"/></svg>Início</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</div>
+    <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002460" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/></svg>Mapa</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Favoritos</div>
+  </div>
+</div>
+
+<!-- ============ 5. FAVORITOS ============ -->
+<div class="frame" id="favoritos">
+  <div class="hero">
+    <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+    <div class="hero-inner"><h1>Favoritos</h1><div class="muted-w" style="margin-top:6px">Suas linhas e paradas do dia a dia</div></div>
+  </div>
+  <div class="content">
+    <div class="section-title"><h2>Minhas linhas</h2><span class="link">Editar</span></div>
+    <div class="card">
+      <div class="row" style="gap:14px">
+        <div class="badge-line">IP</div>
+        <div style="flex:1"><div class="t-title">Ibirapuitã – Polivalente</div><div class="t-sub">Casa → Faculdade</div></div>
+        <span class="tag ativa">ATIVA</span>
+      </div>
+      <div class="row" style="gap:8px;margin-top:14px"><div class="tm now" style="flex:1">10:22</div><div class="tm" style="flex:1">11:22</div><div class="tm" style="flex:1">12:22</div><div class="tm" style="flex:1">13:22</div></div>
+    </div>
+    <div class="card">
+      <div class="row" style="gap:14px">
+        <div class="badge-line">VN</div>
+        <div style="flex:1"><div class="t-title">Piola – Vila Nova</div><div class="t-sub">Trabalho → Casa</div></div>
+        <span class="tag ativa">ATIVA</span>
+      </div>
+      <div class="row" style="gap:8px;margin-top:14px"><div class="tm now" style="flex:1">10:40</div><div class="tm" style="flex:1">11:40</div><div class="tm" style="flex:1">12:40</div><div class="tm" style="flex:1">13:40</div></div>
+    </div>
+    <div class="section-title"><h2>Alertas ativos</h2></div>
+    <div class="card row" style="gap:12px">
+      <div class="q" style="width:44px;height:44px;border:none;background:#E8EEF8;border-radius:12px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg></div>
+      <div style="flex:1"><div class="t-title">Avisar 5 min antes</div><div class="t-sub">IP · Parada Unipampa · Seg–Sex 7:22</div></div>
+      <div style="width:46px;height:28px;border-radius:14px;background:#002460;position:relative"><div style="position:absolute;right:3px;top:3px;width:22px;height:22px;border-radius:11px;background:#fff"></div></div>
+    </div>
+    <div class="card row" style="gap:12px">
+      <div class="q" style="width:44px;height:44px;border:none;background:#E8EEF8;border-radius:12px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5"/></svg></div>
+      <div style="flex:1"><div class="t-title">Mudanças de itinerário</div><div class="t-sub">Linhas favoritas</div></div>
+      <div style="width:46px;height:28px;border-radius:14px;background:#002460;position:relative"><div style="position:absolute;right:3px;top:3px;width:22px;height:22px;border-radius:11px;background:#fff"></div></div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M3 11 12 4l9 7v9H3z"/></svg>Início</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</div>
+    <div class="tab"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/></svg>Mapa</div>
+    <div class="tab on"><svg width="24" height="24" viewBox="0 0 24 24" fill="#002460" stroke="#002460" stroke-width="2"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Favoritos</div>
+  </div>
+</div>
+
+</body>
+</html>
