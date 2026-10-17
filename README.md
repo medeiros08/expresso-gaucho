@@ -2,7 +2,9 @@
 
 > *Sua felicidade é o nosso movimento.*
 
-**▶️ Acesse o protótipo online: <https://medeiros08.github.io/expresso-gaucho/>**
+**▶️ Site do passageiro: <https://medeiros08.github.io/expresso-gaucho/>**
+
+**🔒 Área da empresa: <https://medeiros08.github.io/expresso-gaucho/prototipo/admin/>**
 
 Software de **linhas, horários e acompanhamento de ônibus em tempo real** para o transporte público de Alegrete/RS, desenvolvido como projeto da disciplina **Inovação e Criatividade** (Unipampa) em proposta de parceria com a **Fronteira Transportes**.
 
@@ -20,28 +22,47 @@ Uma única tela que reúne:
 - **Mapa ao vivo** com a posição dos ônibus no trajeto
 - **Favoritos e alertas** ("me avise 5 min antes do ônibus passar na Unipampa")
 
+E uma **área da empresa** para a Fronteira manter tudo atualizado sem depender de programador.
+
 ## Protótipos
 
 | Protótipo | O que é | Como abrir |
 |---|---|---|
 | **Desktop (executável)** | Sistema web completo e funcional, com os horários reais de 9 linhas | [Online](https://medeiros08.github.io/expresso-gaucho/) ou abra [`prototipo/desktop/index.html`](prototipo/desktop/index.html) no navegador |
+| **Área da empresa** | Painel para cadastrar linhas, editar horários, publicar avisos e fazer backup | [Online](https://medeiros08.github.io/expresso-gaucho/prototipo/admin/) ou abra [`prototipo/admin/index.html`](prototipo/admin/index.html) |
 | **Mobile (Figma)** | 5 telas do app + guia visual | [Arquivo no Figma](https://www.figma.com/design/Q36nVNsu5dfWKfHz8hVXAo) · HTML em [`prototipo/mobile/telas.html`](prototipo/mobile/telas.html) |
 
-### Rodando o protótipo desktop
+### Rodando localmente
 
-Não precisa instalar nada. Basta abrir `prototipo/desktop/index.html` com dois cliques. O arquivo `dados.js` precisa estar na mesma pasta.
+Não precisa instalar nada. Basta abrir `prototipo/desktop/index.html` (site do passageiro) ou `prototipo/admin/index.html` (área da empresa) com dois cliques. Mantenha a pasta `prototipo/` inteira, porque as duas partes usam `desktop/dados.js` e `desktop/db.js`.
 
 Se preferir um servidor local:
 
 ```bash
-python -m http.server 8765 --directory prototipo/desktop
+python -m http.server 8766 --directory prototipo
 ```
 
-Depois acesse <http://localhost:8765>.
+Depois acesse <http://localhost:8766/desktop/> e <http://localhost:8766/admin/>.
 
 ### Modo demonstração
 
 Clique no **relógio** no canto superior direito para escolher dia e hora, acelerar o tempo (10× ou 60×) ou pausar. Assim a apresentação funciona em qualquer horário, inclusive com ônibus "andando" no mapa.
+
+## Área da empresa
+
+Painel onde a Fronteira mantém o sistema atualizado. **Acesso de demonstração:** qualquer e-mail e senha entram.
+
+| Tela | O que faz |
+|---|---|
+| **Painel** | Linhas ativas, viagens por dia, gráfico de saídas por hora, pendências (linhas sem horário e horários com erro) e atividade recente |
+| **Linhas** | Cadastrar, editar, excluir e suspender/reativar linhas, com pré-visualização de como aparece no site |
+| **Horários** | Editor em planilha: tabelas por dias da semana, sentidos, paradas e viagens. Aceita `7:15`, `715` ou `7.15`, navegação por setas, **colar direto do Excel**, **deslocar horários** (+/- minutos) e **criar o sentido de volta** com as paradas invertidas |
+| **Avisos** | Avisos para os passageiros (alerta ou informativo), gerais ou ligados a linhas específicas |
+| **Publicação** | Publicar ou descartar alterações, histórico de quem publicou o quê, backup/importação em JSON, exportação em planilha (.csv) e geração de um novo `dados.js` |
+
+**Como funciona:** as edições ficam em rascunho até a empresa clicar em **Publicar no site**. Antes de publicar, o painel confere todos os horários e bloqueia a publicação se algum estiver inválido ou fora de ordem (por exemplo, chegar numa parada antes de passar pela anterior). Ao publicar, o site do passageiro é atualizado na hora, inclusive em outra aba aberta.
+
+> ⚠️ Neste protótipo os dados publicados ficam salvos **no navegador** de quem usou o painel. Na versão final, o login e os dados ficarão em um servidor e valerão para todos os passageiros.
 
 ### O que é real e o que é simulado
 
@@ -53,6 +74,7 @@ Clique no **relógio** no canto superior direito para escolher dia e hora, acele
 | Posição do ônibus no mapa | 🔶 **Simulada** a partir da tabela (sem GPS) |
 | Mapa | 🔶 Esquemático (desenho do trajeto, não o mapa real da cidade) |
 | Siglas das linhas (IP, VS…) | 🔶 Criadas pela equipe |
+| Login e publicação da área da empresa | 🔶 Demonstração: sem servidor, dados salvos no navegador |
 
 ## Modelo de negócio
 
@@ -74,7 +96,8 @@ Resumo do [plano de marketing](docs/marketing.md):
 
 - [ ] Integrar GPS real dos ônibus (rastreadores da frota ou app do motorista)
 - [ ] Usar o mapa real da cidade com as coordenadas das paradas
-- [ ] Painel administrativo para a empresa cadastrar linhas e editar horários
+- [x] Painel administrativo para a empresa cadastrar linhas e editar horários
+- [ ] Servidor com banco de dados e login real para a área da empresa
 - [ ] Horários das linhas que ainda não têm tabela publicada
 - [ ] QR Code nas placas das paradas abrindo a tela daquela parada
 - [ ] Alertas pelo WhatsApp
@@ -93,8 +116,11 @@ expresso-gaucho/
 │   └── analise-360-e-marketing.pdf  # Documento original
 └── prototipo/
     ├── desktop/
-    │   ├── index.html               # Sistema web executável
-    │   └── dados.js                 # Linhas e horários oficiais
+    │   ├── index.html               # Site do passageiro
+    │   ├── dados.js                 # Linhas e horários oficiais
+    │   └── db.js                    # Dados compartilhados (oficiais + publicados pela empresa)
+    ├── admin/
+    │   └── index.html               # Área da empresa
     └── mobile/
         └── telas.html               # Telas do app (origem do Figma)
 ```
@@ -103,7 +129,7 @@ expresso-gaucho/
 
 | Integrante | Parte no projeto |
 |---|---|
-| Arthur de Freitas Medeiros | Protótipos (Figma, sistema desktop) |
+| Arthur de Freitas Medeiros | Protótipos (Figma, site do passageiro, área da empresa) |
 | _Nome do colega_ | Análise 360° |
 | _Nome do colega_ | Marketing |
 
