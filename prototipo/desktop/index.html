@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fronteira Transportes · Linhas e Horários</title>
+<style>
+:root{
+  --navy-900:#0D1B35;--navy-800:#002460;--navy-700:#003580;--navy-50:#E8EEF8;--navy-25:#F4F7FC;
+  --ink:#1E293B;--ink-2:#64748B;--line:#E2E8F0;--line-2:#CBD5E1;--bg:#F1F5F9;--white:#fff;
+  --green:#15803D;--green-bg:#DCFCE7;--amber:#B45309;--amber-bg:#FEF3C7;--red:#DC2626;
+  --grad:linear-gradient(135deg,#002460 0%,#003580 100%);
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 14px rgba(15,23,42,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);font-size:15px;min-height:100vh;display:flex;flex-direction:column}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+.container{max-width:1200px;margin:0 auto;padding:0 32px;width:100%}
+
+/* NAV */
+.nav{background:var(--grad);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,20,60,.25)}
+.nav .container{height:68px;display:flex;align-items:center;gap:28px}
+.brand{display:flex;align-items:center;gap:12px;cursor:pointer}
+.brand-ic{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.brand b{font-size:19px;font-weight:800;letter-spacing:-.3px;display:block;line-height:1}
+.brand small{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:600}
+.nav-links{display:flex;gap:4px;margin-left:12px}
+.nav-links a{padding:9px 14px;border-radius:10px;font-weight:600;font-size:14.5px;color:rgba(255,255,255,.82);display:flex;align-items:center;gap:8px}
+.nav-links a:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-links a.on{background:rgba(255,255,255,.15);color:#fff}
+.nav-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.pill{white-space:nowrap;display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:600}
+.pill.btn:hover{background:rgba(255,255,255,.16)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:#4ADE80}
+.pill.sim .dot{background:#FBBF24}
+
+/* HERO */
+.hero{background:var(--grad);color:#fff;padding:40px 0 44px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-120px;top:-160px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.08),transparent 65%)}
+.hero h1{font-size:36px;font-weight:800;letter-spacing:-.8px;line-height:1.15}
+.hero p{color:rgba(255,255,255,.72);margin-top:8px;font-size:16px}
+.crumb{font-size:13px;color:rgba(255,255,255,.65);font-weight:600;margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.crumb a:hover{color:#fff;text-decoration:underline}
+
+main{flex:1;padding:28px 0 56px}
+.grid{display:grid;gap:20px}
+.g-2{grid-template-columns:1fr 1fr}
+.g-3{grid-template-columns:repeat(3,1fr)}
+.g-main{grid-template-columns:1.55fr 1fr}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px}
+.card h2{font-size:18px;font-weight:700;letter-spacing:-.2px}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.muted{color:var(--ink-2)}
+.small{font-size:13px}
+.row{display:flex;align-items:center;gap:12px}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.code{min-width:46px;height:46px;border-radius:12px;background:var(--navy-800);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14.5px;letter-spacing:.3px;flex-shrink:0}
+.code.sm{min-width:34px;height:34px;border-radius:9px;font-size:12px}
+.code.sel{background:#fff;color:var(--navy-800);border:2px solid var(--navy-800)}
+.tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap}
+.t-ativa{background:var(--green-bg);color:var(--green)}
+.t-urb{background:var(--navy-50);color:var(--navy-700)}
+.t-sel{background:var(--amber-bg);color:var(--amber)}
+.t-off{background:#F1F5F9;color:var(--ink-2)}
+.chip{padding:8px 16px;border-radius:999px;border:1px solid var(--line-2);background:#fff;font-size:14px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.chip:hover{border-color:var(--navy-700);color:var(--navy-700)}
+.chip.on{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+.btn{height:44px;padding:0 18px;border-radius:12px;background:var(--navy-800);color:#fff;font-weight:700;font-size:14.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{background:var(--navy-700)}
+.btn.ghost{background:#fff;color:var(--navy-800);border:1.5px solid var(--navy-800)}
+.btn.ghost:hover{background:var(--navy-25)}
+.btn.light{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.btn.light:hover{background:rgba(255,255,255,.22)}
+.btn.sm{height:36px;padding:0 12px;font-size:13.5px;border-radius:10px}
+.field{height:48px;border-radius:12px;border:1px solid var(--line-2);background:#fff;padding:0 14px;display:flex;align-items:center;gap:10px;flex:1}
+.field:focus-within{border-color:var(--navy-700);box-shadow:0 0 0 3px rgba(0,53,128,.12)}
+.field input,.field select{border:none;outline:none;flex:1;background:transparent;font-size:15px;min-width:0}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--ink-2);letter-spacing:.6px;text-transform:uppercase}
+.empty{padding:28px;text-align:center;color:var(--ink-2);border:1.5px dashed var(--line-2);border-radius:14px;background:var(--navy-25)}
+
+/* Planner */
+.planner{margin-top:24px;background:#fff;border-radius:18px;padding:14px;display:flex;gap:10px;align-items:center;box-shadow:0 14px 40px rgba(0,20,60,.3);color:var(--ink);position:relative;z-index:2}
+.planner .field{border-color:var(--line)}
+.swap{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
+.swap:hover{background:var(--navy-25)}
+
+/* list items */
+.item{display:flex;align-items:center;gap:14px;padding:12px;border-radius:12px;cursor:pointer}
+.item:hover{background:var(--navy-25)}
+.item+.item{border-top:1px solid var(--line)}
+.eta{text-align:right;min-width:64px}
+.eta b{display:block;font-size:22px;font-weight:800;color:var(--navy-800);line-height:1}
+.eta span{font-size:11.5px;color:var(--ink-2);font-weight:600}
+.eta.now b{color:var(--green)}
+
+/* Lines grid */
+.toolbar{display:flex;gap:12px;align-items:center;margin-bottom:20px}
+.lgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.lcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow);cursor:pointer;display:flex;flex-direction:column;gap:12px;transition:transform .12s,box-shadow .12s}
+.lcard:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(15,23,42,.1);border-color:#C7D4EA}
+.lcard h3{font-size:16px;font-weight:700;line-height:1.3}
+.lfoot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:12px;font-size:13.5px}
+.star{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--line-2)}
+.star:hover{background:var(--navy-25)}
+.star.on{color:#F59E0B}
+
+/* Detail */
+.next{background:var(--grad);color:#fff;border-radius:18px;padding:22px;display:flex;justify-content:space-between;align-items:center}
+.next .big{font-size:44px;font-weight:800;letter-spacing:-1px;line-height:1}
+.count{background:rgba(255,255,255,.14);border-radius:14px;padding:12px 18px;text-align:center;min-width:96px}
+.count b{font-size:30px;font-weight:800;display:block;line-height:1}
+.tgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.tm{height:42px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:14.5px;font-weight:600;cursor:pointer}
+.tm:hover{border-color:var(--navy-700)}
+.tm.past{color:var(--line-2);background:var(--bg)}
+.tm.next{background:var(--green-bg);border-color:#86EFAC;color:var(--green)}
+.tm.on{background:var(--navy-800);color:#fff;border-color:var(--navy-800)}
+.seg{display:inline-flex;background:rgba(255,255,255,.12);border-radius:12px;padding:4px;gap:4px}
+.seg button{padding:9px 16px;border-radius:9px;font-size:14px;font-weight:600;color:rgba(255,255,255,.8)}
+.seg button.on{background:#fff;color:var(--navy-800)}
+.timeline{position:relative}
+.stop{display:flex;align-items:center;gap:14px;min-height:40px;position:relative;cursor:pointer;border-radius:8px;padding:0 6px}
+.stop:hover{background:var(--navy-25)}
+.stop:before{content:"";position:absolute;left:12.5px;top:0;bottom:0;width:3px;background:#C7D4EA}
+.stop:first-child:before{top:50%}.stop:last-child:before{bottom:50%}
+.stop.done:before{background:var(--navy-700)}
+.sdot{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--navy-700);position:relative;z-index:1;flex-shrink:0}
+.stop.done .sdot{background:var(--navy-700)}
+.stop.sel .sdot{box-shadow:0 0 0 4px rgba(0,53,128,.2)}
+.stop.bus .sdot{background:var(--green);border-color:var(--green);box-shadow:0 0 0 5px rgba(21,128,61,.2)}
+.stop .nm{flex:1;font-size:14.5px;font-weight:600}
+.stop.done .nm,.stop.done .hr{color:var(--ink-2)}
+.stop .hr{font-weight:700;color:var(--navy-800);font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:440px}
+table{border-collapse:separate;border-spacing:0;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;text-align:center}
+td:first-child,th:first-child{position:sticky;left:0;background:#fff;text-align:left;font-weight:600;z-index:1;border-right:1px solid var(--line)}
+thead th{position:sticky;top:0;background:var(--navy-25);font-size:11.5px;color:var(--ink-2);z-index:2}
+thead th:first-child{z-index:3;background:var(--navy-25)}
+td.past{color:var(--line-2)}
+td.nx{background:var(--green-bg);color:var(--green);font-weight:700}
+td.colsel{background:var(--navy-50)}
+td.nil{color:var(--line-2)}
+.warn{background:var(--amber-bg);border:1px solid #FCD34D;color:#78350F;border-radius:12px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.info{background:var(--navy-25);border:1px solid #C7D4EA;color:var(--navy-800);border-radius:12px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+
+/* Map */
+.mapwrap{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#E9EEE6}
+.live{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);color:var(--green);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}100%{box-shadow:0 0 0 8px rgba(21,128,61,0)}}
+.bus-g{transition:transform .9s linear}
+
+/* Popover / modal / toast */
+.pop{position:absolute;right:0;top:calc(100% + 10px);width:330px;background:#fff;color:var(--ink);border-radius:16px;box-shadow:0 20px 50px rgba(0,20,60,.3);padding:18px;display:none;z-index:60}
+.pop.open{display:block}
+.pop h4{font-size:15px;margin-bottom:4px}
+.switch{width:44px;height:26px;border-radius:13px;background:var(--line-2);position:relative;flex-shrink:0;transition:background .15s}
+.switch:after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch.on{background:var(--navy-800)}
+.switch.on:after{left:21px}
+.modal-bg{position:fixed;inset:0;background:rgba(13,27,53,.55);display:none;align-items:center;justify-content:center;z-index:80}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:440px;max-width:calc(100% - 32px);padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.toasts{position:fixed;right:24px;bottom:24px;display:flex;flex-direction:column;gap:10px;z-index:90}
+.toast{background:var(--navy-900);color:#fff;border-radius:14px;padding:14px 16px;min-width:300px;max-width:380px;box-shadow:0 14px 40px rgba(0,0,0,.3);display:flex;gap:12px;align-items:flex-start;animation:tin .25s ease-out}
+.toast b{display:block;font-size:14.5px}
+.toast span{font-size:13px;color:rgba(255,255,255,.75)}
+@keyframes tin{from{transform:translateY(12px);opacity:0}}
+footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;padding:22px 0}
+.kpi b{font-size:28px;font-weight:800;color:var(--navy-800);display:block;letter-spacing:-.5px}
+.kpi span{font-size:13px;color:var(--ink-2);font-weight:600}
+.sel-inline{border:1px solid var(--line-2);border-radius:10px;height:36px;padding:0 10px;background:#fff;font-size:14px;font-weight:600;color:var(--navy-800);outline:none}
+.res{display:flex;align-items:center;gap:16px;padding:14px;border:1px solid var(--line);border-radius:14px;cursor:pointer;background:#fff}
+.res:hover{border-color:#C7D4EA;background:var(--navy-25)}
+.res+.res{margin-top:10px}
+.res .tt{font-size:22px;font-weight:800;color:var(--navy-800);font-variant-numeric:tabular-nums}
+.arrow{color:var(--ink-2)}
+.dur{font-size:12px;font-weight:700;color:var(--ink-2);background:var(--bg);border-radius:999px;padding:3px 9px}
+@media (max-width:980px){.nav-right>.pill{display:none}.brand small{display:none}.hero h1{font-size:28px}.g-2,.g-3,.g-main,.lgrid{grid-template-columns:1fr}.nav-links{display:none}.tgrid{grid-template-columns:repeat(5,1fr)}.planner{flex-direction:column;align-items:stretch}.container{padding:0 16px}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <div class="brand" onclick="go('#/inicio')">
+      <div class="brand-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 7h8"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg></div>
+      <div><b>Fronteira</b><small>Transportes</small></div>
+    </div>
+    <div class="nav-links" id="navlinks">
+      <a href="#/inicio" data-k="inicio">Início</a>
+      <a href="#/linhas" data-k="linhas">Linhas</a>
+      <a href="#/planejar" data-k="planejar">Como chegar</a>
+      <a href="#/mapa" data-k="mapa">Mapa ao vivo</a>
+      <a href="#/favoritos" data-k="favoritos">Favoritos <span id="favcount"></span></a>
+    </div>
+    <div class="nav-right">
+      <div class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Alegrete · RS</div>
+      <div style="position:relative">
+        <button class="pill btn" id="clockBtn" onclick="togglePop(event)"><i class="dot"></i><span id="clock">--</span></button>
+        <div class="pop" id="pop" onclick="event.stopPropagation()">
+          <h4>Relógio do sistema</h4>
+          <p class="small muted" style="margin-bottom:14px">Use o modo demonstração para simular outro dia/horário durante a apresentação.</p>
+          <div class="row between" style="margin-bottom:14px"><span style="font-weight:600">Modo demonstração</span><button class="switch" id="simSw" onclick="toggleSim()"></button></div>
+          <div id="simBox">
+            <div class="row" style="gap:8px;margin-bottom:10px">
+              <select class="sel-inline" id="simDay" style="flex:1" onchange="setSim()">
+                <option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option><option value="0">Domingo</option>
+              </select>
+              <input type="time" class="sel-inline" id="simTime" style="flex:1" onchange="setSim()">
+            </div>
+            <div class="small muted" style="margin-bottom:6px;font-weight:600">Velocidade</div>
+            <div class="row" style="gap:6px" id="speeds">
+              <button class="chip" data-s="1" onclick="setSpeed(1)">1×</button>
+              <button class="chip" data-s="10" onclick="setSpeed(10)">10×</button>
+              <button class="chip" data-s="60" onclick="setSpeed(60)">60×</button>
+              <button class="chip" data-s="0" onclick="setSpeed(0)">Pausar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div id="app" style="flex:1;display:flex;flex-direction:column"></div>
+
+<footer><div class="container row between wrap">
+  <span>© Fronteira Transportes · Tecnologia <b style="color:#fff">Expresso Gaúcho</b> · Projeto Inovação e Criatividade, Unipampa</span>
+  <span>Horários: fonte oficial expressofronteiradoeste.com.br · Posição dos ônibus: simulada</span>
+</div></footer>
+
+<div class="modal-bg" id="modalBg" onclick="closeModal()"><div class="modal" id="modal" onclick="event.stopPropagation()"></div></div>
+<div class="toasts" id="toasts"></div>
+
+<script src="dados.js"></script>
+<script>
+/* ================= UTIL ================= */
+const $=s=>document.querySelector(s);
+const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const toMin=t=>{if(!t)return null;const [h,m]=t.split(':').map(Number);return h*60+m};
+const fmt=m=>{m=Math.floor(m);const h=Math.floor(m/60)%24,mm=m%60;return h+':'+String(mm).padStart(2,'0')};
+const slug=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const normStop=s=>s.replace(/\s*↩$/,'').trim();
+const ICON={
+ star:'<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
+ search:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+ pin:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>',
+ flag:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2"><path d="M5 21V4h11l-2 4 2 4H5"/></svg>',
+ bell:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg>',
+ map:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14"/></svg>',
+ back:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m15 18-6-6 6-6"/></svg>',
+ swap:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2"><path d="M7 4v16M7 4 3 8M7 4l4 4M17 20V4M17 20l-4-4M17 20l4-4"/></svg>',
+ warn:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2.2" style="flex-shrink:0"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>',
+ info:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2.2" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></svg>',
+ trash:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+ bus:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>'
+};
+
+/* ================= DATA MODEL ================= */
+const LINES=LINHAS.map(l=>{
+  const blocks=(HORARIOS[l.nome]||[]).map(b=>({label:b.day,days:dayTypes(b.day),dirs:b.dirs.map(d=>buildDir(d))}));
+  return {...l,id:slug(l.nome),blocks,hasSched:blocks.length>0};
+});
+function dayTypes(label){
+  if(/segunda a sexta/i.test(label))return[1,2,3,4,5];
+  if(/segunda a s[áa]bado/i.test(label))return[1,2,3,4,5,6];
+  if(/^s[áa]bado/i.test(label))return[6];
+  if(/domingo/i.test(label))return[0];
+  return[1,2,3,4,5];
+}
+function buildDir(d){
+  const stops=d.rows.map(r=>normStop(r[0]));
+  const n=Math.max(...d.rows.map(r=>r.length))-1;
+  const trips=[];
+  for(let j=0;j<n;j++){
+    const times=d.rows.map(r=>toMin(r[j+1]||null));
+    const valid=times.filter(t=>t!=null);
+    if(valid.length)trips.push({idx:j,times,start:Math.min(...valid),end:Math.max(...valid)});
+  }
+  const cnt=stops.map((_,i)=>trips.filter(t=>t.times[i]!=null).length);
+  return {name:d.dir,stops,trips,main:cnt.indexOf(Math.max(...cnt))};
+}
+const LINE=id=>LINES.find(l=>l.id===id);
+const ALLSTOPS=[...new Set(LINES.flatMap(l=>l.blocks.flatMap(b=>b.dirs.flatMap(d=>d.stops))))].sort((a,b)=>a.localeCompare(b,'pt'));
+const activeBlocks=(l,dow)=>l.blocks.filter(b=>b.days.includes(dow));
+
+/* ================= STATE ================= */
+const store={get(k,d){try{const v=localStorage.getItem('fronteira:'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('fronteira:'+k,JSON.stringify(v))}catch(e){}}};
+const S={
+  fav:new Set(store.get('fav',['ibirapuita-polivalente'])),
+  alerts:store.get('alerts',[]),
+  myStop:store.get('myStop','Terminal'),
+  sim:store.get('sim',{on:true,dow:2,min:10*60+28,speed:1}),
+  filter:'todas',q:'',
+  det:{block:0,dir:0,stop:0,trip:null,table:false},
+  map:{line:'ibirapuita-polivalente',block:0,dir:0},
+  plan:{o:'Unipampa',d:'Terminal'}
+};
+const save=()=>{store.set('fav',[...S.fav]);store.set('alerts',S.alerts);store.set('myStop',S.myStop);store.set('sim',S.sim)};
+function NOW(){
+  if(S.sim.on)return{dow:S.sim.dow,min:S.sim.min};
+  const d=new Date();return{dow:d.getDay(),min:d.getHours()*60+d.getMinutes()+d.getSeconds()/60};
+}
+
+/* ================= CLOCK / SIM ================= */
+function renderClock(){
+  const n=NOW();
+  $('#clock').textContent=DIAS[n.dow].slice(0,3)+' · '+fmt(n.min)+(S.sim.on?' · Demo':'');
+  $('#clockBtn').classList.toggle('sim',S.sim.on);
+  $('#simSw').classList.toggle('on',S.sim.on);
+  $('#simBox').style.opacity=S.sim.on?1:.4;$('#simBox').style.pointerEvents=S.sim.on?'auto':'none';
+  $('#simDay').value=S.sim.dow;
+  if(document.activeElement!==$('#simTime'))$('#simTime').value=String(Math.floor(S.sim.min/60)%24).padStart(2,'0')+':'+String(Math.floor(S.sim.min%60)).padStart(2,'0');
+  document.querySelectorAll('#speeds .chip').forEach(c=>c.classList.toggle('on',+c.dataset.s===S.sim.speed));
+}
+function togglePop(e){e.stopPropagation();$('#pop').classList.toggle('open')}
+document.addEventListener('click',()=>$('#pop').classList.remove('open'));
+function toggleSim(){S.sim.on=!S.sim.on;save();renderClock();route()}
+function setSim(){const [h,m]=$('#simTime').value.split(':').map(Number);S.sim.dow=+$('#simDay').value;if(!isNaN(h))S.sim.min=h*60+m;save();renderClock();route()}
+function setSpeed(s){S.sim.speed=s;save();renderClock()}
+
+/* ================= QUERIES ================= */
+// próximas passagens numa parada (todas as linhas)
+function arrivalsAt(stop,n,horizon=180){
+  const {dow,min}=NOW();const out=[];
+  LINES.forEach(l=>activeBlocks(l,dow).forEach(b=>b.dirs.forEach((d,di)=>{
+    d.stops.forEach((s,si)=>{if(s!==stop)return;
+      d.trips.forEach(t=>{const tm=t.times[si];if(tm!=null&&tm>=min-0.5&&tm-min<=horizon)out.push({l,b,d,di,bi:l.blocks.indexOf(b),t:tm,trip:t,si});});
+    });
+  })));
+  return out.sort((a,b)=>a.t-b.t).slice(0,n);
+}
+function nextDeparture(l){
+  const {dow,min}=NOW();let best=null;
+  activeBlocks(l,dow).forEach(b=>b.dirs.forEach(d=>d.trips.forEach(t=>{if(t.start>=min&&(!best||t.start<best.t))best={t:t.start,d}})));
+  return best;
+}
+function lineStatus(l){
+  if(!l.hasSched)return{cls:'t-ativa',txt:'Ativa'};
+  const {dow,min}=NOW();const bl=activeBlocks(l,dow);
+  if(!bl.length)return{cls:'t-off',txt:'Sem operação hoje'};
+  const running=bl.some(b=>b.dirs.some(d=>d.trips.some(t=>min>=t.start&&min<=t.end)));
+  if(running)return{cls:'t-ativa',txt:'Em operação'};
+  const nx=nextDeparture(l);
+  const started=bl.some(b=>b.dirs.some(d=>d.trips.some(t=>t.end<min)));
+  return nx?{cls:'t-urb',txt:(started?'Próxima ':'Inicia ')+fmt(nx.t)}:{cls:'t-off',txt:'Encerrada hoje'};
+}
+function busPos(trip,min){
+  if(min<trip.start||min>trip.end)return null;
+  const pts=trip.times.map((t,i)=>({t,i})).filter(p=>p.t!=null);
+  for(let k=0;k<pts.length-1;k++){const a=pts[k],b=pts[k+1];if(min>=a.t&&min<=b.t){const f=b.t===a.t?0:(min-a.t)/(b.t-a.t);return{from:a.i,to:b.i,f}}}
+  return{from:pts[pts.length-1].i,to:pts[pts.length-1].i,f:0};
+}
+function eta(diff){if(diff<1)return{b:'agora',s:''};if(diff<60)return{b:Math.floor(diff),s:'min'};const h=Math.floor(diff/60),m=Math.floor(diff%60);return{b:h+'h'+String(m).padStart(2,'0'),s:''}}
+function plan(o,d){
+  const {dow,min}=NOW();const out=[];
+  LINES.forEach(l=>activeBlocks(l,dow).forEach(b=>b.dirs.forEach((dir,di)=>{
+    const oi=dir.stops.indexOf(o);if(oi<0)return;
+    const dj=dir.stops.indexOf(d,oi+1);if(dj<0)return;
+    dir.trips.forEach(t=>{const a=t.times[oi],c=t.times[dj];if(a!=null&&c!=null&&a>=min-0.5)out.push({l,b,bi:l.blocks.indexOf(b),dir,di,dep:a,arr:c,trip:t,oi,dj});});
+  })));
+  return out.sort((x,y)=>x.dep-y.dep);
+}
+
+/* ================= ROUTER ================= */
+function go(h){location.hash=h}
+window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0)});
+let LIVE=()=>{};
+function route(){
+  const h=location.hash||'#/inicio';const p=h.slice(2).split('/');
+  document.querySelectorAll('#navlinks a').forEach(a=>a.classList.toggle('on',a.dataset.k===p[0]||(p[0]==='linha'&&a.dataset.k==='linhas')));
+  $('#favcount').textContent=S.fav.size?'('+S.fav.size+')':'';
+  const v={inicio:vHome,linhas:vLines,linha:vDetail,planejar:vPlan,mapa:vMap,favoritos:vFav}[p[0]]||vHome;
+  LIVE=()=>{};
+  v(p.slice(1).map(decodeURIComponent));
+  LIVE();
+}
+
+/* ================= COMPONENTS ================= */
+const tipoTag=l=>l.tipo==='Seletivo'?'<span class="tag t-sel">Seletivo</span>':'<span class="tag t-urb">Urbana</span>';
+const codeBox=(l,sm)=>`<div class="code ${sm?'sm':''} ${l.tipo==='Seletivo'?'sel':''}">${l.cod}</div>`;
+const starBtn=l=>`<button class="star ${S.fav.has(l.id)?'on':''}" title="Favoritar" onclick="event.stopPropagation();toggleFav('${l.id}')">${ICON.star}</button>`;
+function toggleFav(id){S.fav.has(id)?S.fav.delete(id):S.fav.add(id);save();toast(S.fav.has(id)?'Adicionada aos favoritos':'Removida dos favoritos',LINE(id).nome);route()}
+function hero(title,sub,extra='',crumb=''){return `<section class="hero"><div class="container">${crumb}<h1>${title}</h1>${sub?`<p>${sub}</p>`:''}${extra}</div></section>`}
+const stopOptions=sel=>ALLSTOPS.map(s=>`<option ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
+
+/* ================= VIEW: HOME ================= */
+function vHome(){
+  const n=NOW();
+  const trips=LINES.reduce((a,l)=>a+activeBlocks(l,n.dow).reduce((x,b)=>x+b.dirs.reduce((y,d)=>y+d.trips.length,0),0),0);
+  $('#app').innerHTML=hero(saud()+'! Para onde vamos hoje?','Consulte linhas, horários e acompanhe seu ônibus em tempo real em Alegrete.',
+  `<div class="planner">
+    <div class="field">${ICON.pin}<div style="flex:1"><label>Origem</label><select id="po">${stopOptions(S.plan.o)}</select></div></div>
+    <button class="swap" onclick="swapPlan()" title="Inverter">${ICON.swap}</button>
+    <div class="field">${ICON.flag}<div style="flex:1"><label>Destino</label><select id="pd">${stopOptions(S.plan.d)}</select></div></div>
+    <button class="btn" style="height:52px;padding:0 26px" onclick="doPlan()">${ICON.search.replace('#64748B','#fff')} Buscar viagens</button>
+  </div>`)+
+  `<main><div class="container">
+    <div class="grid g-3" style="margin-bottom:20px">
+      <div class="card kpi"><b>${LINES.length}</b><span>linhas em Alegrete</span></div>
+      <div class="card kpi"><b>${ALLSTOPS.length}</b><span>paradas com horário</span></div>
+      <div class="card kpi"><b id="kTrips">${trips}</b><span>viagens programadas hoje (${DIAS[n.dow]})</span></div>
+    </div>
+    <div class="grid g-main">
+      <div class="card">
+        <div class="card-h"><h2>Próximos ônibus na sua parada</h2>
+          <select class="sel-inline" onchange="S.myStop=this.value;save();LIVE()">${stopOptions(S.myStop)}</select></div>
+        <div id="arr"></div>
+      </div>
+      <div class="grid" style="align-content:start">
+        <div class="card"><div class="card-h"><h2>Avisos</h2></div>
+          <div class="warn">${ICON.warn}<div>Aos <b>domingos</b> operam apenas as linhas Domingo João XXIII, Domingo Piola e Domingo Vera Cruz.</div></div>
+          <div class="info" style="margin-top:10px">${ICON.info}<div>Sábado (até 14:00): linha Terminal – Nova Brasília atende o <b>Balneário Caverá</b>.</div></div>
+        </div>
+        <div class="card"><div class="card-h"><h2>Seus favoritos</h2><a class="small" style="color:var(--navy-700);font-weight:700" href="#/favoritos">Ver todos</a></div><div id="hfav"></div></div>
+      </div>
+    </div>
+  </div></main>`;
+  LIVE=()=>{
+    const a=arrivalsAt(S.myStop,6);
+    $('#arr').innerHTML=a.length?a.map(x=>{const e=eta(x.t-NOW().min);return `<div class="item" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${esc(x.d.stops[x.si])}')">
+      ${codeBox(x.l)}<div style="flex:1"><div style="font-weight:700">${esc(x.d.name)}</div><div class="small muted">${esc(x.l.nome)} · passa às ${fmt(x.t)}</div></div>
+      <div class="eta ${e.b==='agora'?'now':''}"><b>${e.b}</b><span>${e.s}</span></div></div>`}).join(''):`<div class="empty">Nenhum ônibus programado para <b>${esc(S.myStop)}</b> nas próximas 3 horas.<br><span class="small">Dica: abra o relógio no topo e ative o modo demonstração.</span></div>`;
+    const favs=[...S.fav].map(LINE).filter(Boolean);
+    $('#hfav').innerHTML=favs.length?favs.map(l=>{const nx=nextDeparture(l);return `<div class="item" onclick="go('#/linha/${l.id}')">${codeBox(l,1)}<div style="flex:1"><div style="font-weight:700;font-size:14px">${esc(l.nome)}</div><div class="small muted">${nx?'Próxima saída '+fmt(nx.t):lineStatus(l).txt}</div></div></div>`}).join(''):'<div class="empty small">Toque na ⭐ de uma linha para salvá-la aqui.</div>';
+  };
+}
+function saud(){const m=NOW().min;return m<720?'Bom dia':m<1080?'Boa tarde':'Boa noite'}
+function swapPlan(){const o=$('#po').value;$('#po').value=$('#pd').value;$('#pd').value=o}
+function doPlan(){S.plan.o=$('#po').value;S.plan.d=$('#pd').value;go('#/planejar/'+encodeURIComponent(S.plan.o)+'/'+encodeURIComponent(S.plan.d))}
+
+/* ================= VIEW: LINES ================= */
+function vLines(){
+  $('#app').innerHTML=hero('Linhas em Operação','Consulte rotas e horários de todas as linhas da Fronteira em Alegrete.')+
+  `<main><div class="container">
+    <div class="toolbar">
+      <div class="field" style="background:#fff">${ICON.search}<input id="q" placeholder="Buscar por linha, bairro ou parada…" value="${esc(S.q)}" oninput="S.q=this.value;LIVE()"></div>
+      <div class="row" style="gap:8px">${['todas','urbana','seletivo','favoritas'].map(f=>`<button class="chip ${S.filter===f?'on':''}" onclick="S.filter='${f}';route()">${{todas:'Todas',urbana:'Urbanas',seletivo:'Seletivo',favoritas:'⭐ Favoritas'}[f]}</button>`).join('')}</div>
+    </div>
+    <p class="muted small" id="lcount" style="margin-bottom:14px"></p>
+    <div class="lgrid" id="lgrid"></div>
+  </div></main>`;
+  LIVE=()=>{
+    const q=slug(S.q);
+    const list=[...LINES].sort((a,b)=>b.hasSched-a.hasSched).filter(l=>(S.filter==='todas'||(S.filter==='urbana'&&l.tipo==='Urbana')||(S.filter==='seletivo'&&l.tipo==='Seletivo')||(S.filter==='favoritas'&&S.fav.has(l.id)))
+      &&(!q||slug(l.nome+' '+l.desc+' '+l.blocks.flatMap(b=>b.dirs.flatMap(d=>d.stops)).join(' ')).includes(q)));
+    $('#lcount').textContent=list.length+(list.length===1?' linha encontrada':' linhas encontradas');
+    $('#lgrid').innerHTML=list.length?list.map(l=>{const st=lineStatus(l);const nx=nextDeparture(l);
+      const stopsMatch=q&&l.blocks.flatMap(b=>b.dirs.flatMap(d=>d.stops)).find(s=>slug(s).includes(q));
+      return `<div class="lcard" onclick="go('#/linha/${l.id}')">
+        <div class="row between"><div class="row" style="gap:8px">${tipoTag(l)}<span class="tag ${st.cls}">${st.txt}</span></div>${starBtn(l)}</div>
+        <div class="row">${codeBox(l)}<div><h3>${esc(l.nome)}</h3><div class="small muted">${esc(l.desc)}${stopsMatch?` · passa em <b>${esc(stopsMatch)}</b>`:''}</div></div></div>
+        <div class="lfoot">${l.hasSched?`<span class="muted">${nx?'Próxima saída <b style="color:var(--navy-800)">'+fmt(nx.t)+'</b>':'Sem mais saídas hoje'}</span><span style="color:var(--navy-700);font-weight:700">Ver horários →</span>`:`<span class="muted">Horários sob consulta</span><span style="color:var(--navy-700);font-weight:700">Detalhes →</span>`}</div>
+      </div>`}).join(''):'<div class="empty" style="grid-column:1/-1">Nenhuma linha encontrada.</div>';
+  };
+  const q=$('#q');if(S.q){q.focus();q.setSelectionRange(99,99)}
+}
+
+/* ================= VIEW: DETAIL ================= */
+function openTrip(id,bi,di,tripIdx,stop){
+  const l=LINE(id);const d=l.blocks[bi].dirs[di];
+  S.det={block:bi,dir:di,stop:Math.max(0,d.stops.indexOf(stop)),trip:tripIdx,table:false,_id:id};go('#/linha/'+id);
+}
+function vDetail([id]){
+  const l=LINE(id);if(!l)return go('#/linhas');
+  if(S.det._id!==id){const bl=activeBlocks(l,NOW().dow);const b0=bl.length?l.blocks.indexOf(bl[0]):0;S.det={block:b0,dir:0,stop:l.hasSched?l.blocks[b0].dirs[0].main:0,trip:null,table:false,_id:id}}
+  const crumb=`<div class="crumb"><a href="#/linhas">${ICON.back} Linhas</a> / ${esc(l.nome)}</div>`;
+  if(!l.hasSched){
+    $('#app').innerHTML=hero(esc(l.nome),l.tipo+' · '+esc(l.desc),`<div class="row" style="margin-top:18px">${tipoTag(l)}<span class="tag t-ativa">Ativa</span></div>`,crumb)+
+    `<main><div class="container"><div class="card"><div class="empty">Os horários desta linha ainda não foram publicados no sistema.<br><span class="small">${l.tipo==='Seletivo'?'Linha intermunicipal Alegrete x Passo Novo — consulte a rodoviária.':'Consulte o atendimento da Fronteira Transportes.'}</span></div>
+    <div class="row" style="margin-top:16px;justify-content:center">${l.nome.startsWith('Domingo')?'<div class="warn">'+ICON.warn+'<div>Opera somente aos domingos.</div></div>':''}</div></div></div></main>`;
+    return;
+  }
+  const B=l.blocks[S.det.block]||l.blocks[0];const D=B.dirs[S.det.dir]||B.dirs[0];
+  if(S.det.stop>=D.stops.length)S.det.stop=0;
+  const todayOk=B.days.includes(NOW().dow);
+  $('#app').innerHTML=hero(`<span class="row" style="gap:16px">${codeBox(l).replace('class="code','class="code" style="background:rgba(255,255,255,.15);min-width:56px;height:56px;font-size:18px" data-x="')}${esc(l.nome)}</span>`,'',
+    `<div class="row between wrap" style="margin-top:20px;gap:14px">
+      <div class="seg">${B.dirs.map((d,i)=>`<button class="${i===S.det.dir?'on':''}" onclick="S.det.dir=${i};S.det.stop=${d.main};S.det.trip=null;route()">${esc(d.name)}</button>`).join('')}</div>
+      <div class="row" style="gap:10px">
+        <button class="btn light" onclick="S.map={line:'${l.id}',block:${S.det.block},dir:${S.det.dir}};go('#/mapa')">${ICON.map} Ver no mapa</button>
+        <button class="btn light" onclick="toggleFav('${l.id}')">${S.fav.has(l.id)?'★ Favorita':'☆ Favoritar'}</button>
+      </div></div>`,crumb)+
+  `<main><div class="container">
+    <div class="row wrap" style="gap:8px;margin-bottom:18px">
+      ${l.blocks.map((b,i)=>`<button class="chip ${i===S.det.block?'on':''}" onclick="S.det.block=${i};S.det.dir=0;S.det.stop=${b.dirs[0].main};S.det.trip=null;route()">${esc(b.label)}</button>`).join('')}
+      <span class="tag ${lineStatus(l).cls}" style="margin-left:auto">${lineStatus(l).txt}</span>
+    </div>
+    ${todayOk?'':`<div class="warn" style="margin-bottom:18px">${ICON.warn}<div>Esta tabela não vale para hoje (${DIAS[NOW().dow]}). Os destaques de "próxima saída" consideram o horário, não o dia.</div></div>`}
+    <div class="grid g-main">
+      <div class="grid" style="align-content:start">
+        <div class="next" id="nextBox"></div>
+        <div class="card">
+          <div class="card-h"><h2>Horários na parada</h2>
+            <select class="sel-inline" onchange="S.det.stop=+this.value;S.det.trip=null;route()">${D.stops.map((s,i)=>`<option value="${i}" ${i===S.det.stop?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+          <div class="tgrid" id="tgrid"></div>
+          <div class="row small muted" style="gap:16px;margin-top:14px">
+            <span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:4px;background:var(--green-bg);border:1px solid #86EFAC"></i>Próxima</span>
+            <span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:4px;background:var(--navy-800)"></i>Selecionada</span>
+            <span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:4px;background:var(--bg);border:1px solid var(--line)"></i>Já passou</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2>Tabela completa</h2><button class="btn ghost sm" onclick="S.det.table=!S.det.table;route()">${S.det.table?'Ocultar':'Mostrar'} tabela</button></div>
+          ${S.det.table?'<div class="tbl-wrap" id="tbl"></div>':`<p class="muted small">${D.stops.length} paradas · ${D.trips.length} viagens neste sentido. Fonte: tabela oficial publicada pela Fronteira.</p>`}
+        </div>
+      </div>
+      <div class="card" style="align-self:start;position:sticky;top:92px">
+        <div class="card-h"><div><h2>Itinerário</h2><div class="small muted" id="itinSub"></div></div>
+          <button class="btn sm" onclick="openAlert('${l.id}')">${ICON.bell} Avisar-me</button></div>
+        <div class="timeline" id="itin"></div>
+      </div>
+    </div>
+  </div></main>`;
+  LIVE=()=>{
+    const m=NOW().min;
+    const tr=D.trips.filter(t=>t.times[S.det.stop]!=null);
+    const nextT=tr.find(t=>t.times[S.det.stop]>=m-0.5);
+    const selT=S.det.trip!=null?D.trips.find(t=>t.idx===S.det.trip):(nextT||tr[tr.length-1]);
+    // próxima
+    if(nextT){const t=nextT.times[S.det.stop];const e=eta(t-m);const last=nextT.times.filter(x=>x!=null).slice(-1)[0];
+      $('#nextBox').innerHTML=`<div><div class="small" style="color:rgba(255,255,255,.7);font-weight:700;letter-spacing:.8px;text-transform:uppercase">Próxima saída · ${esc(D.stops[S.det.stop])}</div><div class="big" style="margin-top:6px">${fmt(t)}</div><div style="color:rgba(255,255,255,.75);margin-top:6px">Chega em ${esc(D.stops[D.stops.length-1])} às ${fmt(last)}</div></div><div class="count"><b>${e.b}</b><span class="small">${e.s||'&nbsp;'}</span></div>`;
+    }else $('#nextBox').innerHTML=`<div><div class="small" style="color:rgba(255,255,255,.7);font-weight:700;letter-spacing:.8px">PARADA ${esc(D.stops[S.det.stop]).toUpperCase()}</div><div style="font-size:24px;font-weight:800;margin-top:6px">Sem mais saídas hoje</div><div style="color:rgba(255,255,255,.75);margin-top:4px">Primeira saída: ${tr[0]?fmt(tr[0].times[S.det.stop]):'—'}</div></div>`;
+    $('#tgrid').innerHTML=tr.map(t=>{const v=t.times[S.det.stop];const c=t===selT?'on':t===nextT?'next':v<m-0.5?'past':'';return `<div class="tm ${c}" onclick="S.det.trip=${t.idx};LIVE()">${fmt(v)}</div>`}).join('');
+    // itinerário
+    if(selT){const p=busPos(selT,m);
+      $('#itinSub').textContent='Viagem das '+fmt(selT.start)+(p?' · ônibus em trânsito':selT.end<m?' · concluída':'');
+      $('#itin').innerHTML=D.stops.map((s,i)=>{const t=selT.times[i];if(t==null)return'';const done=t<m;const bus=p&&p.to===i&&p.f<1&&!done?false:false;
+        const here=p&&((p.from===i&&p.f<0.5)||(p.to===i&&p.f>=0.5));
+        return `<div class="stop ${done?'done':''} ${i===S.det.stop?'sel':''} ${here?'bus':''}" onclick="S.det.stop=${i};route()"><div class="sdot"></div><div class="nm">${esc(s)}${here?' <span class="live" style="margin-left:6px"><i></i>ônibus aqui</span>':''}</div><div class="hr">${fmt(t)}</div></div>`}).join('');
+    }
+    if(S.det.table){
+      $('#tbl').innerHTML=`<table><thead><tr><th>Parada</th>${D.trips.map((t,j)=>`<th>${j+1}ª</th>`).join('')}</tr></thead><tbody>${D.stops.map((s,i)=>`<tr><td>${esc(s)}</td>${D.trips.map(t=>{const v=t.times[i];if(v==null)return'<td class="nil">—</td>';return `<td class="${t===selT?'colsel':''} ${t===nextT&&i===S.det.stop?'nx':''} ${v<m?'past':''}">${fmt(v)}</td>`}).join('')}</tr>`).join('')}</tbody></table>`;
+    }
+  };
+}
+
+/* ================= ALERTS ================= */
+function openAlert(id){
+  const l=LINE(id);const B=l.blocks[S.det.block];const D=B.dirs[S.det.dir];const m=NOW().min;
+  const tr=D.trips.filter(t=>t.times[S.det.stop]!=null);
+  const def=(S.det.trip!=null?D.trips.find(t=>t.idx===S.det.trip):null)||tr.find(t=>t.times[S.det.stop]>=m)||tr[0];
+  $('#modal').innerHTML=`<div class="row" style="margin-bottom:6px">${codeBox(l,1)}<div><div style="font-weight:800;font-size:18px">Criar alerta</div><div class="small muted">${esc(D.name)}</div></div></div>
+  <p class="small muted" style="margin:10px 0 18px">Você receberá um aviso antes do ônibus passar na parada escolhida.</p>
+  <div class="small" style="font-weight:700;margin-bottom:6px">Parada</div>
+  <div class="field" style="margin-bottom:12px"><select id="aStop" onchange="refreshAlertTimes('${id}')">${D.stops.map((s,i)=>`<option value="${i}" ${i===S.det.stop?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+  <div class="row" style="gap:10px;margin-bottom:12px">
+    <div style="flex:1"><div class="small" style="font-weight:700;margin-bottom:6px">Horário</div><div class="field"><select id="aTrip"></select></div></div>
+    <div style="flex:1"><div class="small" style="font-weight:700;margin-bottom:6px">Avisar</div><div class="field"><select id="aBefore"><option value="2">2 min antes</option><option value="5" selected>5 min antes</option><option value="10">10 min antes</option><option value="15">15 min antes</option></select></div></div>
+  </div>
+  <label class="row small" style="gap:8px;margin-bottom:20px"><input type="checkbox" id="aRep" checked> Repetir todos os dias em que a linha opera</label>
+  <div class="row" style="justify-content:flex-end;gap:10px"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveAlert('${id}')">${ICON.bell} Criar alerta</button></div>`;
+  $('#modalBg').classList.add('open');refreshAlertTimes(id,def&&def.idx);
+}
+function refreshAlertTimes(id,pref){
+  const l=LINE(id);const D=l.blocks[S.det.block].dirs[S.det.dir];const si=+$('#aStop').value;
+  $('#aTrip').innerHTML=D.trips.filter(t=>t.times[si]!=null).map(t=>`<option value="${t.idx}" ${t.idx===pref?'selected':''}>${fmt(t.times[si])}</option>`).join('');
+}
+function saveAlert(id){
+  const l=LINE(id);const B=l.blocks[S.det.block];const D=B.dirs[S.det.dir];const si=+$('#aStop').value;const ti=+$('#aTrip').value;
+  const t=D.trips.find(x=>x.idx===ti).times[si];
+  S.alerts.push({id:Date.now(),line:id,block:S.det.block,dir:S.det.dir,dirName:D.name,stop:D.stops[si],time:t,before:+$('#aBefore').value,rep:$('#aRep').checked,days:B.days,on:true,fired:null});
+  save();closeModal();toast('Alerta criado',`${l.cod} · ${D.stops[si]} às ${fmt(t)}`);
+  if('Notification'in window&&Notification.permission==='default')try{Notification.requestPermission()}catch(e){}
+  route();
+}
+function closeModal(){$('#modalBg').classList.remove('open')}
+function checkAlerts(){
+  const {dow,min}=NOW();
+  S.alerts.forEach(a=>{if(!a.on||!a.days.includes(dow))return;const key=dow+'-'+Math.floor(a.time);
+    const diff=a.time-min;
+    if(diff<=a.before&&diff>-1&&a.fired!==key){a.fired=key;const l=LINE(a.line);
+      const msg=`${l.cod} ${a.dirName} passa em ${a.stop} às ${fmt(a.time)} (${Math.max(0,Math.round(diff))} min)`;
+      toast('🚌 Seu ônibus está chegando!',msg,true);
+      try{if(Notification.permission==='granted')new Notification('Fronteira · ônibus chegando',{body:msg})}catch(e){}
+      if(!a.rep)a.on=false;save();}
+  });
+}
+function toast(t,s,strong){const el=document.createElement('div');el.className='toast';el.innerHTML=`<div class="code sm" style="background:${strong?'#15803D':'rgba(255,255,255,.12)'}">${ICON.bus}</div><div><b>${esc(t)}</b><span>${esc(s)}</span></div>`;$('#toasts').appendChild(el);setTimeout(()=>el.remove(),strong?8000:3200)}
+
+/* ================= VIEW: PLAN ================= */
+function vPlan([o,d]){
+  if(o)S.plan.o=o;if(d)S.plan.d=d;
+  $('#app').innerHTML=hero('Como chegar','Escolha origem e destino para ver as linhas diretas e os próximos horários.',
+  `<div class="planner">
+    <div class="field">${ICON.pin}<div style="flex:1"><label>Origem</label><select id="po">${stopOptions(S.plan.o)}</select></div></div>
+    <button class="swap" onclick="swapPlan()">${ICON.swap}</button>
+    <div class="field">${ICON.flag}<div style="flex:1"><label>Destino</label><select id="pd">${stopOptions(S.plan.d)}</select></div></div>
+    <button class="btn" style="height:52px;padding:0 26px" onclick="doPlan()">Buscar viagens</button></div>`)+
+  `<main><div class="container"><div class="grid g-main"><div class="card"><div class="card-h"><h2 id="pt"></h2></div><div id="pres"></div></div>
+   <div class="card" style="align-self:start"><h2 style="margin-bottom:12px">Como funciona</h2><p class="muted small" style="line-height:1.6">O sistema cruza as tabelas oficiais de todas as linhas e encontra as viagens que passam primeiro na <b>origem</b> e depois no <b>destino</b>, no mesmo sentido. Os horários consideram o dia e a hora atuais (ou do modo demonstração).</p></div></div></div></main>`;
+  LIVE=()=>{
+    const r=plan(S.plan.o,S.plan.d);const m=NOW().min;
+    $('#pt').textContent=S.plan.o===S.plan.d?'Escolha paradas diferentes':`${S.plan.o} → ${S.plan.d}`;
+    if(S.plan.o===S.plan.d){$('#pres').innerHTML='';return}
+    $('#pres').innerHTML=r.length?r.slice(0,8).map(x=>{const e=eta(x.dep-m);return `<div class="res" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${esc(S.plan.o)}')">
+      ${codeBox(x.l)}<div style="flex:1"><div style="font-weight:700">${esc(x.l.nome)}</div><div class="small muted">${esc(x.dir.name)} · ${x.dj-x.oi} paradas</div></div>
+      <div class="row" style="gap:10px"><span class="tt">${fmt(x.dep)}</span><span class="arrow">→</span><span class="tt" style="color:var(--ink)">${fmt(x.arr)}</span><span class="dur">${x.arr-x.dep} min</span></div>
+      <div class="eta ${e.b==='agora'?'now':''}"><b>${e.b}</b><span>${e.s}</span></div></div>`}).join(''):
+      `<div class="empty">Nenhuma linha direta de <b>${esc(S.plan.o)}</b> para <b>${esc(S.plan.d)}</b> no restante do dia.<br><span class="small">Tente inverter o sentido, outra parada próxima ou mudar o horário no modo demonstração.</span></div>`;
+  };
+}
+
+/* ================= VIEW: MAP ================= */
+function vMap(){
+  const withS=LINES.filter(l=>l.hasSched);
+  let l=LINE(S.map.line);if(!l||!l.hasSched){l=withS[0];S.map={line:l.id,block:0,dir:0}}
+  const B=l.blocks[S.map.block]||l.blocks[0];const D=B.dirs[S.map.dir]||B.dirs[0];
+  // layout serpentina
+  const W=780,cols=4,padX=80,rowH=118,top=70;const n=D.stops.length;const rows=Math.ceil(n/cols);const H=top+rows*rowH+20;
+  const pos=D.stops.map((s,i)=>{const r=Math.floor(i/cols),c=i%cols;const cc=r%2?cols-1-c:c;return{x:padX+cc*((W-2*padX)/(cols-1)),y:top+r*rowH}});
+  let path='M'+pos[0].x+' '+pos[0].y;for(let i=1;i<n;i++){const a=pos[i-1],b=pos[i];if(a.y===b.y)path+=` L${b.x} ${b.y}`;else{const dx=a.x>W/2?50:-50;path+=` C${a.x+dx} ${a.y} ${b.x+dx} ${b.y} ${b.x} ${b.y}`}}
+  window._mp={pos,D,l};
+  $('#app').innerHTML=hero('Mapa ao vivo','Acompanhe a posição estimada dos ônibus em cada linha, calculada a partir da tabela oficial.')+
+  `<main><div class="container">
+    <div class="toolbar wrap">
+      <select class="sel-inline" style="height:44px;min-width:280px" onchange="S.map={line:this.value,block:0,dir:0};route()">${withS.map(x=>`<option value="${x.id}" ${x.id===l.id?'selected':''}>${x.cod} · ${esc(x.nome)}</option>`).join('')}</select>
+      ${l.blocks.length>1?`<select class="sel-inline" style="height:44px" onchange="S.map.block=+this.value;S.map.dir=0;route()">${l.blocks.map((b,i)=>`<option value="${i}" ${i===S.map.block?'selected':''}>${esc(b.label)}</option>`).join('')}</select>`:''}
+      <div class="row" style="gap:8px">${B.dirs.map((d,i)=>`<button class="chip ${i===S.map.dir?'on':''}" onclick="S.map.dir=${i};route()">${esc(d.name)}</button>`).join('')}</div>
+      <span class="live" style="margin-left:auto"><i></i>AO VIVO · simulação</span>
+    </div>
+    <div class="grid g-main">
+      <div class="mapwrap" style="align-self:start">
+        <svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">
+          <defs><pattern id="gr" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0H0V60" fill="none" stroke="#fff" stroke-width="9"/></pattern></defs>
+          <rect width="${W}" height="${H}" fill="#E9EEE6"/><rect width="${W}" height="${H}" fill="url(#gr)"/>
+          <rect x="${W-190}" y="20" width="150" height="90" rx="12" fill="#D3E6C8"/><rect x="30" y="${H-120}" width="130" height="90" rx="12" fill="#D3E6C8"/>
+          <path d="M0 ${H*0.45} Q ${W*0.35} ${H*0.3} ${W*0.6} ${H*0.55} T ${W} ${H*0.5}" stroke="#BFD9EE" stroke-width="26" fill="none"/>
+          <path d="${path}" stroke="#fff" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path d="${path}" stroke="#003580" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          ${pos.map((p,i)=>`<g style="cursor:pointer" onclick="S.myStop='${esc(D.stops[i]).replace(/'/g,"\\'")}';save();LIVE()"><circle cx="${p.x}" cy="${p.y}" r="${i===0||i===n-1?10:8}" fill="${i===0||i===n-1?'#003580':'#fff'}" stroke="#003580" stroke-width="3.5"/>
+            <text x="${p.x}" y="${p.y+30}" text-anchor="middle" font-size="12.5" font-weight="700" fill="#1E293B" font-family="Segoe UI,system-ui" paint-order="stroke" stroke="#E9EEE6" stroke-width="4">${esc(D.stops[i].length>22?D.stops[i].slice(0,21)+'…':D.stops[i])}</text></g>`).join('')}
+          <g id="buses"></g>
+        </svg>
+      </div>
+      <div class="card" style="align-self:start">
+        <div class="card-h"><div><h2>${esc(D.name)}</h2><div class="small muted" id="mapSub"></div></div>${codeBox(l)}</div>
+        <div id="busList" style="margin-bottom:14px"></div>
+        <h3 style="font-size:14px;margin:6px 0 8px" class="muted">PRÓXIMA PASSAGEM POR PARADA</h3>
+        <div id="stopEtas" style="max-height:360px;overflow:auto"></div>
+      </div>
+    </div>
+  </div></main>`;
+  LIVE=()=>{
+    const m=NOW().min;const {pos,D}=window._mp;
+    const act=D.trips.map(t=>({t,p:busPos(t,m)})).filter(x=>x.p);
+    $('#buses').innerHTML=act.map(({t,p},k)=>{const a=pos[p.from],b=pos[p.to];const x=a.x+(b.x-a.x)*p.f,y=a.y+(b.y-a.y)*p.f;
+      return `<g class="bus-g" style="transform:translate(${x}px,${y}px)"><circle r="22" fill="#15803D" opacity=".18"/><rect x="-16" y="-16" width="32" height="32" rx="9" fill="#002460" stroke="#fff" stroke-width="2.5"/><g transform="translate(-9,-9) scale(.75)" fill="none" stroke="#fff" stroke-width="2.4"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></g>
+      <g transform="translate(20,-30)"><rect width="${62}" height="22" rx="6" fill="#fff" stroke="#CBD5E1"/><text x="31" y="15" text-anchor="middle" font-size="11.5" font-weight="800" fill="#002460" font-family="Segoe UI,system-ui">${fmt(t.start)}</text></g></g>`}).join('');
+    $('#mapSub').textContent=act.length?act.length+(act.length>1?' ônibus em trânsito':' ônibus em trânsito'):'Nenhum ônibus em trânsito agora';
+    $('#busList').innerHTML=act.length?act.map(({t,p})=>{const nxt=D.stops[p.f>0?p.to:p.from];const nt=t.times[p.f>0?p.to:p.from];return `<div class="info" style="margin-bottom:8px"><span class="live"><i></i>${fmt(t.start)}</span><div>Indo para <b>${esc(nxt)}</b> · chega ${fmt(nt)}<div class="small muted">Previsão: no horário</div></div></div>`}).join(''):`<div class="empty small">Nenhum ônibus desta linha circulando às ${fmt(m)}. ${(()=>{const nx=D.trips.find(t=>t.start>m);return nx?'Próxima saída às <b>'+fmt(nx.start)+'</b>.':'Operação encerrada hoje.'})()}</div>`;
+    $('#stopEtas').innerHTML=D.stops.map((s,i)=>{const nx=D.trips.map(t=>t.times[i]).filter(v=>v!=null&&v>=m-0.5).sort((a,b)=>a-b)[0];const e=nx!=null?eta(nx-m):null;
+      return `<div class="item" style="padding:9px 8px" onclick="S.myStop='${esc(s).replace(/'/g,"\\'")}';save();toast('Parada definida como sua parada','${esc(s).replace(/'/g,"\\'")}')"><div class="sdot" style="width:12px;height:12px;border-width:2.5px"></div><div style="flex:1;font-weight:600;font-size:14px">${esc(s)}</div><div class="small" style="font-weight:700;color:${e&&e.b==='agora'?'var(--green)':'var(--navy-800)'}">${e?(e.b==='agora'?'agora':e.b+' '+e.s):'—'}</div></div>`}).join('');
+  };
+}
+
+/* ================= VIEW: FAVORITES ================= */
+function vFav(){
+  const favs=[...S.fav].map(LINE).filter(Boolean);
+  $('#app').innerHTML=hero('Favoritos e alertas','Suas linhas do dia a dia e os avisos de chegada configurados.')+
+  `<main><div class="container"><div class="grid g-main">
+    <div class="card"><div class="card-h"><h2>Minhas linhas</h2><a class="btn ghost sm" href="#/linhas">+ Adicionar</a></div><div id="favs"></div></div>
+    <div class="grid" style="align-content:start">
+      <div class="card"><div class="card-h"><h2>Alertas</h2><span class="tag t-urb">${S.alerts.length}</span></div><div id="alist"></div></div>
+      <div class="card"><h2 style="margin-bottom:8px">Notificações do navegador</h2><p class="small muted" style="margin-bottom:12px">Permita notificações para ser avisado mesmo com a aba em segundo plano.</p>
+        <button class="btn ghost sm" onclick="try{Notification.requestPermission().then(p=>toast('Permissão: '+p,'Notificações do navegador'))}catch(e){toast('Não suportado','Use os avisos na tela')}">${ICON.bell} Permitir notificações</button>
+        <button class="btn ghost sm" style="margin-left:6px" onclick="testAlert()">Testar aviso</button></div>
+    </div></div></div></main>`;
+  LIVE=()=>{
+    const m=NOW().min;
+    $('#favs').innerHTML=favs.length?favs.map(l=>{
+      if(!l.hasSched)return `<div class="item" onclick="go('#/linha/${l.id}')">${codeBox(l)}<div style="flex:1"><div style="font-weight:700">${esc(l.nome)}</div><div class="small muted">Horários sob consulta</div></div>${starBtn(l)}</div>`;
+      const bl=activeBlocks(l,NOW().dow);
+      const dirs=(bl[0]||l.blocks[0]).dirs;
+      return `<div style="padding:12px 0;border-bottom:1px solid var(--line)"><div class="row" style="cursor:pointer" onclick="go('#/linha/${l.id}')">${codeBox(l)}<div style="flex:1"><div style="font-weight:700">${esc(l.nome)}</div><div class="small muted">${lineStatus(l).txt}</div></div>${starBtn(l)}</div>
+      ${dirs.map(d=>{const nx=d.trips.filter(t=>t.start>=m-0.5).slice(0,5);return `<div style="margin-top:12px"><div class="small muted" style="font-weight:700;margin-bottom:6px">${esc(d.name)} · saída de ${esc(d.stops[0])}</div><div class="row" style="gap:6px">${nx.length?nx.map((t,i)=>`<div class="tm ${i===0?'next':''}" style="flex:1;max-width:84px;height:36px">${fmt(t.start)}</div>`).join(''):'<span class="small muted">Sem mais saídas hoje</span>'}</div></div>`}).join('')}</div>`}).join(''):'<div class="empty">Você ainda não tem linhas favoritas. Toque na ⭐ em qualquer linha.</div>';
+    $('#alist').innerHTML=S.alerts.length?S.alerts.map(a=>{const l=LINE(a.line);return `<div class="item" style="cursor:default">${codeBox(l,1)}<div style="flex:1"><div style="font-weight:700;font-size:14px">${esc(a.stop)} · ${fmt(a.time)}</div><div class="small muted">${esc(a.dirName)} · ${a.before} min antes${a.rep?' · repete':''}</div></div>
+      <button class="switch ${a.on?'on':''}" onclick="toggleAlert(${a.id})"></button><button class="star" style="color:var(--ink-2)" onclick="delAlert(${a.id})">${ICON.trash}</button></div>`}).join(''):'<div class="empty small">Nenhum alerta. Abra uma linha e toque em <b>Avisar-me</b>.</div>';
+  };
+}
+function toggleAlert(id){const a=S.alerts.find(x=>x.id===id);a.on=!a.on;a.fired=null;save();LIVE()}
+function delAlert(id){S.alerts=S.alerts.filter(x=>x.id!==id);save();route()}
+function testAlert(){toast('🚌 Seu ônibus está chegando!','IP Ibirapuitã → Polivalente passa em Unipampa em 5 min',true)}
+
+/* ================= LOOP ================= */
+let last=Date.now();
+setInterval(()=>{
+  const now=Date.now();const dt=(now-last)/1000;last=now;
+  if(S.sim.on&&S.sim.speed){S.sim.min+=dt*S.sim.speed/60;if(S.sim.min>=1440){S.sim.min-=1440;S.sim.dow=(S.sim.dow+1)%7;route()}}
+  renderClock();checkAlerts();
+  if(!$('#modalBg').classList.contains('open'))LIVE();
+},1000);
+setInterval(()=>store.set('sim',S.sim),5000);
+renderClock();route();
+</script>
+</body>
+</html>
