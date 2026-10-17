@@ -2,6 +2,8 @@
 
 > *Sua felicidade é o nosso movimento.*
 
+**▶️ Acesse o protótipo online: <https://medeiros08.github.io/expresso-gaucho/>**
+
 Software de **linhas, horários e acompanhamento de ônibus em tempo real** para o transporte público de Alegrete/RS, desenvolvido como projeto da disciplina **Inovação e Criatividade** (Unipampa) em proposta de parceria com a **Fronteira Transportes**.
 
 ## O problema
@@ -22,7 +24,7 @@ Uma única tela que reúne:
 
 | Protótipo | O que é | Como abrir |
 |---|---|---|
-| **Desktop (executável)** | Sistema web completo e funcional, com os horários reais de 9 linhas | Abra [`prototipo/desktop/index.html`](prototipo/desktop/index.html) no navegador |
+| **Desktop (executável)** | Sistema web completo e funcional, com os horários reais de 9 linhas | [Online](https://medeiros08.github.io/expresso-gaucho/) ou abra [`prototipo/desktop/index.html`](prototipo/desktop/index.html) no navegador |
 | **Mobile (Figma)** | 5 telas do app + guia visual | [Arquivo no Figma](https://www.figma.com/design/Q36nVNsu5dfWKfHz8hVXAo) · HTML em [`prototipo/mobile/telas.html`](prototipo/mobile/telas.html) |
 
 ### Rodando o protótipo desktop
