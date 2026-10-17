@@ -22,13 +22,13 @@ a{color:inherit;text-decoration:none}
 
 /* NAV */
 .nav{background:var(--grad);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,20,60,.25)}
-.nav .container{height:68px;display:flex;align-items:center;gap:28px}
+.nav .container{height:68px;display:flex;align-items:center;gap:18px}
 .brand{display:flex;align-items:center;gap:12px;cursor:pointer}
 .brand-ic{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center}
 .brand b{font-size:19px;font-weight:800;letter-spacing:-.3px;display:block;line-height:1}
 .brand small{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:600}
 .nav-links{display:flex;gap:4px;margin-left:12px}
-.nav-links a{padding:9px 14px;border-radius:10px;font-weight:600;font-size:14.5px;color:rgba(255,255,255,.82);display:flex;align-items:center;gap:8px}
+.nav-links a{white-space:nowrap;padding:9px 11px;border-radius:10px;font-weight:600;font-size:14.5px;color:rgba(255,255,255,.82);display:flex;align-items:center;gap:8px}
 .nav-links a:hover{background:rgba(255,255,255,.08);color:#fff}
 .nav-links a.on{background:rgba(255,255,255,.15);color:#fff}
 .nav-right{margin-left:auto;display:flex;gap:10px;align-items:center}
@@ -181,6 +181,7 @@ footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;pad
 .res .tt{font-size:22px;font-weight:800;color:var(--navy-800);font-variant-numeric:tabular-nums}
 .arrow{color:var(--ink-2)}
 .dur{font-size:12px;font-weight:700;color:var(--ink-2);background:var(--bg);border-radius:999px;padding:3px 9px}
+@media (max-width:1240px){.nav-right>.pill:not(.btn){display:none}}
 @media (max-width:980px){.nav-right>.pill{display:none}.brand small{display:none}.hero h1{font-size:28px}.g-2,.g-3,.g-main,.lgrid{grid-template-columns:1fr}.nav-links{display:none}.tgrid{grid-template-columns:repeat(5,1fr)}.planner{flex-direction:column;align-items:stretch}.container{padding:0 16px}}
 </style>
 </head>
@@ -200,6 +201,7 @@ footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;pad
       <a href="#/favoritos" data-k="favoritos">Favoritos <span id="favcount"></span></a>
     </div>
     <div class="nav-right">
+      <a class="pill btn" href="../admin/" title="Área da empresa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Empresa</a>
       <div class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Alegrete · RS</div>
       <div style="position:relative">
         <button class="pill btn" id="clockBtn" onclick="togglePop(event)"><i class="dot"></i><span id="clock">--</span></button>
@@ -232,18 +234,19 @@ footer{background:var(--navy-900);color:rgba(255,255,255,.65);font-size:13px;pad
 
 <footer><div class="container row between wrap">
   <span>© Fronteira Transportes · Tecnologia <b style="color:#fff">Expresso Gaúcho</b> · Projeto Inovação e Criatividade, Unipampa</span>
-  <span>Horários: fonte oficial expressofronteiradoeste.com.br · Posição dos ônibus: simulada</span>
+  <span id="fonte">Horários: fonte oficial expressofronteiradoeste.com.br · Posição dos ônibus: simulada</span>
 </div></footer>
 
 <div class="modal-bg" id="modalBg" onclick="closeModal()"><div class="modal" id="modal" onclick="event.stopPropagation()"></div></div>
 <div class="toasts" id="toasts"></div>
 
 <script src="dados.js"></script>
+<script src="db.js"></script>
 <script>
 /* ================= UTIL ================= */
 const $=s=>document.querySelector(s);
 const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-const toMin=t=>{if(!t)return null;const [h,m]=t.split(':').map(Number);return h*60+m};
+const toMin=t=>{if(!t)return null;const r=/^(\d{1,2}):(\d{2})$/.exec(String(t).trim());return r?+r[1]*60+ +r[2]:null};
 const fmt=m=>{m=Math.floor(m);const h=Math.floor(m/60)%24,mm=m%60;return h+':'+String(mm).padStart(2,'0')};
 const slug=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -264,10 +267,17 @@ const ICON={
 };
 
 /* ================= DATA MODEL ================= */
-const LINES=LINHAS.map(l=>{
-  const blocks=(HORARIOS[l.nome]||[]).map(b=>({label:b.day,days:dayTypes(b.day),dirs:b.dirs.map(d=>buildDir(d))}));
-  return {...l,id:slug(l.nome),blocks,hasSched:blocks.length>0};
+const DBD=DB.load();
+const LINES=DBD.linhas.map(l=>{
+  const blocks=(DBD.horarios[l.id]||[]).map(b=>({label:b.day,days:b.days&&b.days.length?b.days:dayTypes(b.day),dirs:b.dirs.map(d=>buildDir(d)).filter(d=>d.stops.length&&d.trips.length)})).filter(b=>b.dirs.length);
+  return {...l,blocks,hasSched:blocks.length>0,susp:l.status==='suspensa'};
 });
+const AVISOS_ATIVOS=(DBD.avisos||[]).filter(a=>a.ativo);
+function avisosHtml(lineId){
+  const list=AVISOS_ATIVOS.filter(a=>lineId?a.linhas.includes(lineId):true);
+  return list.map(a=>`<div class="${a.tipo==='alerta'?'warn':'info'}" style="margin-bottom:10px">${a.tipo==='alerta'?ICON.warn:ICON.info}<div><b>${esc(a.titulo)}</b><br>${esc(a.texto)}</div></div>`).join('');
+}
+window.addEventListener('storage',e=>{if(e.key===DB.KEY)location.reload()});
 function dayTypes(label){
   if(/segunda a sexta/i.test(label))return[1,2,3,4,5];
   if(/segunda a s[áa]bado/i.test(label))return[1,2,3,4,5,6];
@@ -277,7 +287,7 @@ function dayTypes(label){
 }
 function buildDir(d){
   const stops=d.rows.map(r=>normStop(r[0]));
-  const n=Math.max(...d.rows.map(r=>r.length))-1;
+  const n=d.rows.length?Math.max(...d.rows.map(r=>r.length))-1:0;
   const trips=[];
   for(let j=0;j<n;j++){
     const times=d.rows.map(r=>toMin(r[j+1]||null));
@@ -285,11 +295,11 @@ function buildDir(d){
     if(valid.length)trips.push({idx:j,times,start:Math.min(...valid),end:Math.max(...valid)});
   }
   const cnt=stops.map((_,i)=>trips.filter(t=>t.times[i]!=null).length);
-  return {name:d.dir,stops,trips,main:cnt.indexOf(Math.max(...cnt))};
+  return {name:d.dir,stops,trips,main:Math.max(0,cnt.indexOf(Math.max(...cnt)))};
 }
 const LINE=id=>LINES.find(l=>l.id===id);
 const ALLSTOPS=[...new Set(LINES.flatMap(l=>l.blocks.flatMap(b=>b.dirs.flatMap(d=>d.stops))))].sort((a,b)=>a.localeCompare(b,'pt'));
-const activeBlocks=(l,dow)=>l.blocks.filter(b=>b.days.includes(dow));
+const activeBlocks=(l,dow)=>l.susp?[]:l.blocks.filter(b=>b.days.includes(dow));
 
 /* ================= STATE ================= */
 const store={get(k,d){try{const v=localStorage.getItem('fronteira:'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('fronteira:'+k,JSON.stringify(v))}catch(e){}}};
@@ -343,6 +353,7 @@ function nextDeparture(l){
   return best;
 }
 function lineStatus(l){
+  if(l.susp)return{cls:'t-sel',txt:'Suspensa'};
   if(!l.hasSched)return{cls:'t-ativa',txt:'Ativa'};
   const {dow,min}=NOW();const bl=activeBlocks(l,dow);
   if(!bl.length)return{cls:'t-off',txt:'Sem operação hoje'};
@@ -416,8 +427,7 @@ function vHome(){
       </div>
       <div class="grid" style="align-content:start">
         <div class="card"><div class="card-h"><h2>Avisos</h2></div>
-          <div class="warn">${ICON.warn}<div>Aos <b>domingos</b> operam apenas as linhas Domingo João XXIII, Domingo Piola e Domingo Vera Cruz.</div></div>
-          <div class="info" style="margin-top:10px">${ICON.info}<div>Sábado (até 14:00): linha Terminal – Nova Brasília atende o <b>Balneário Caverá</b>.</div></div>
+          ${avisosHtml()||'<div class="empty small">Nenhum aviso no momento.</div>'}
         </div>
         <div class="card"><div class="card-h"><h2>Seus favoritos</h2><a class="small" style="color:var(--navy-700);font-weight:700" href="#/favoritos">Ver todos</a></div><div id="hfav"></div></div>
       </div>
@@ -473,8 +483,8 @@ function vDetail([id]){
   if(S.det._id!==id){const bl=activeBlocks(l,NOW().dow);const b0=bl.length?l.blocks.indexOf(bl[0]):0;S.det={block:b0,dir:0,stop:l.hasSched?l.blocks[b0].dirs[0].main:0,trip:null,table:false,_id:id}}
   const crumb=`<div class="crumb"><a href="#/linhas">${ICON.back} Linhas</a> / ${esc(l.nome)}</div>`;
   if(!l.hasSched){
-    $('#app').innerHTML=hero(esc(l.nome),l.tipo+' · '+esc(l.desc),`<div class="row" style="margin-top:18px">${tipoTag(l)}<span class="tag t-ativa">Ativa</span></div>`,crumb)+
-    `<main><div class="container"><div class="card"><div class="empty">Os horários desta linha ainda não foram publicados no sistema.<br><span class="small">${l.tipo==='Seletivo'?'Linha intermunicipal Alegrete x Passo Novo — consulte a rodoviária.':'Consulte o atendimento da Fronteira Transportes.'}</span></div>
+    $('#app').innerHTML=hero(esc(l.nome),l.tipo+' · '+esc(l.desc),`<div class="row" style="margin-top:18px">${tipoTag(l)}<span class="tag ${lineStatus(l).cls}">${lineStatus(l).txt}</span></div>`,crumb)+
+    `<main><div class="container">${avisosHtml(l.id)}<div class="card"><div class="empty">Os horários desta linha ainda não foram publicados no sistema.<br><span class="small">${l.tipo==='Seletivo'?'Linha intermunicipal Alegrete x Passo Novo — consulte a rodoviária.':'Consulte o atendimento da Fronteira Transportes.'}</span></div>
     <div class="row" style="margin-top:16px;justify-content:center">${l.nome.startsWith('Domingo')?'<div class="warn">'+ICON.warn+'<div>Opera somente aos domingos.</div></div>':''}</div></div></div></main>`;
     return;
   }
@@ -493,7 +503,9 @@ function vDetail([id]){
       ${l.blocks.map((b,i)=>`<button class="chip ${i===S.det.block?'on':''}" onclick="S.det.block=${i};S.det.dir=0;S.det.stop=${b.dirs[0].main};S.det.trip=null;route()">${esc(b.label)}</button>`).join('')}
       <span class="tag ${lineStatus(l).cls}" style="margin-left:auto">${lineStatus(l).txt}</span>
     </div>
-    ${todayOk?'':`<div class="warn" style="margin-bottom:18px">${ICON.warn}<div>Esta tabela não vale para hoje (${DIAS[NOW().dow]}). Os destaques de "próxima saída" consideram o horário, não o dia.</div></div>`}
+    ${l.susp?`<div class="warn" style="margin-bottom:18px">${ICON.warn}<div><b>Linha suspensa pela empresa.</b> Os horários abaixo estão temporariamente sem operação.</div></div>`:''}
+    ${avisosHtml(l.id)}
+    ${todayOk||l.susp?'':`<div class="warn" style="margin-bottom:18px">${ICON.warn}<div>Esta tabela não vale para hoje (${DIAS[NOW().dow]}). Os destaques de "próxima saída" consideram o horário, não o dia.</div></div>`}
     <div class="grid g-main">
       <div class="grid" style="align-content:start">
         <div class="next" id="nextBox"></div>
@@ -698,6 +710,7 @@ setInterval(()=>{
   if(!$('#modalBg').classList.contains('open'))LIVE();
 },1000);
 setInterval(()=>store.set('sim',S.sim),5000);
+if(DBD.atualizado)$('#fonte').textContent='Horários atualizados pela Fronteira em '+new Date(DBD.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+' · Posição dos ônibus: simulada';
 renderClock();route();
 </script>
 </body>

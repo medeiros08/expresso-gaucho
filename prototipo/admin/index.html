@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fronteira · Área da Empresa</title>
+<style>
+:root{
+  --navy-900:#0D1B35;--navy-800:#002460;--navy-700:#003580;--navy-50:#E8EEF8;--navy-25:#F4F7FC;
+  --ink:#1E293B;--ink-2:#64748B;--line:#E2E8F0;--line-2:#CBD5E1;--bg:#F1F5F9;
+  --green:#15803D;--green-bg:#DCFCE7;--amber:#B45309;--amber-bg:#FEF3C7;--red:#DC2626;--red-bg:#FEE2E2;
+  --grad:linear-gradient(135deg,#002460 0%,#003580 100%);
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 14px rgba(15,23,42,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);font-size:14.5px;background:var(--bg);min-height:100vh}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+a{color:inherit;text-decoration:none}
+
+/* LOGIN */
+#login{min-height:100vh;display:none;place-items:center;background:var(--grad);padding:24px}
+.login-card{background:#fff;border-radius:22px;padding:36px;width:420px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+
+/* SHELL */
+#shell{display:none;grid-template-columns:250px 1fr;min-height:100vh}
+.side{background:var(--grad);color:#fff;padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:12px;padding:0 8px 22px}
+.brand-ic{width:40px;height:40px;border-radius:11px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.brand b{font-size:18px;font-weight:800;display:block;line-height:1.1}
+.brand small{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.65);font-weight:600}
+.side a.nl{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;font-weight:600;color:rgba(255,255,255,.78)}
+.side a.nl:hover{background:rgba(255,255,255,.08);color:#fff}
+.side a.nl.on{background:rgba(255,255,255,.16);color:#fff}
+.side .badge{margin-left:auto;background:#FBBF24;color:#422006;font-size:11px;font-weight:800;border-radius:999px;padding:1px 8px}
+.side-foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.15);padding:14px 8px 0;font-size:13px}
+.side-foot .who{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:800}
+.main{min-width:0}
+.pubbar{position:sticky;top:0;z-index:30;background:#FFFBEB;border-bottom:1px solid #FCD34D;padding:10px 32px;display:none;align-items:center;gap:14px;color:#78350F;font-weight:600}
+.pubbar.show{display:flex}
+.content{padding:28px 32px 60px;max-width:1280px}
+.page-h{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.page-h h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.crumb{font-size:12.5px;color:var(--ink-2);font-weight:600;margin-bottom:4px}
+.crumb a:hover{text-decoration:underline}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px}
+.card+.card{margin-top:18px}
+.card h2{font-size:17px;font-weight:700}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.grid{display:grid;gap:18px}
+.g-4{grid-template-columns:repeat(4,1fr)}
+.g-2{grid-template-columns:1fr 1fr}
+.g-main{grid-template-columns:1.6fr 1fr}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.wrap{flex-wrap:wrap}
+.muted{color:var(--ink-2)}
+.small{font-size:13px}
+.kpi b{font-size:30px;font-weight:800;color:var(--navy-800);display:block;letter-spacing:-.5px;line-height:1.1}
+.kpi span{font-size:13px;color:var(--ink-2);font-weight:600}
+.kpi .ic{width:38px;height:38px;border-radius:10px;background:var(--navy-50);display:grid;place-items:center;margin-bottom:12px}
+
+.btn{height:40px;padding:0 16px;border-radius:11px;background:var(--navy-800);color:#fff;font-weight:700;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn:hover{background:var(--navy-700)}
+.btn.ghost{background:#fff;color:var(--navy-800);border:1.5px solid var(--line-2)}
+.btn.ghost:hover{border-color:var(--navy-700);background:var(--navy-25)}
+.btn.danger{background:#fff;color:var(--red);border:1.5px solid #FCA5A5}
+.btn.danger:hover{background:var(--red-bg)}
+.btn.green{background:var(--green)}
+.btn.green:hover{background:#166534}
+.btn.sm{height:32px;padding:0 11px;font-size:13px;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.iconbtn{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ink-2)}
+.iconbtn:hover{background:var(--navy-25);color:var(--navy-800)}
+.iconbtn.del:hover{background:var(--red-bg);color:var(--red)}
+.inp{height:40px;border:1px solid var(--line-2);border-radius:10px;padding:0 12px;background:#fff;outline:none;min-width:0}
+.inp:focus{border-color:var(--navy-700);box-shadow:0 0 0 3px rgba(0,53,128,.12)}
+textarea.inp{height:auto;padding:10px 12px;resize:vertical}
+label.f{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bottom:6px;letter-spacing:.3px}
+.fg{margin-bottom:14px}
+.chip{padding:7px 14px;border-radius:999px;border:1px solid var(--line-2);background:#fff;font-size:13.5px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.chip:hover{border-color:var(--navy-700);color:var(--navy-700)}
+.chip.on{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+.chip.add{border-style:dashed;color:var(--navy-700)}
+.tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap}
+.t-ativa{background:var(--green-bg);color:var(--green)}
+.t-urb{background:var(--navy-50);color:var(--navy-700)}
+.t-sel{background:var(--amber-bg);color:var(--amber)}
+.t-off{background:#F1F5F9;color:var(--ink-2)}
+.t-red{background:var(--red-bg);color:var(--red)}
+.code{min-width:38px;height:38px;border-radius:10px;background:var(--navy-800);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex-shrink:0}
+.code.sel{background:#fff;color:var(--navy-800);border:2px solid var(--navy-800)}
+.switch{width:42px;height:24px;border-radius:12px;background:var(--line-2);position:relative;flex-shrink:0;transition:background .15s}
+.switch:after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch.on{background:var(--green)}
+.switch.on:after{left:21px}
+.empty{padding:30px;text-align:center;color:var(--ink-2);border:1.5px dashed var(--line-2);border-radius:14px;background:var(--navy-25)}
+
+table.list{width:100%;border-collapse:collapse}
+table.list th{text-align:left;font-size:11.5px;color:var(--ink-2);font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--navy-25)}
+table.list td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.list tr:hover td{background:#FAFBFD}
+
+/* editor de horários */
+.tabs{display:flex;gap:4px;background:var(--bg);border-radius:12px;padding:4px;flex-wrap:wrap}
+.tabs button{padding:8px 14px;border-radius:9px;font-weight:600;color:var(--ink-2);font-size:13.5px}
+.tabs button.on{background:#fff;color:var(--navy-800);box-shadow:0 1px 3px rgba(15,23,42,.12)}
+.tabs button.add{color:var(--navy-700)}
+.days{display:flex;gap:6px}
+.days label{display:flex}
+.days input{display:none}
+.days span{width:42px;height:34px;border-radius:9px;border:1px solid var(--line-2);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--ink-2);cursor:pointer}
+.days input:checked+span{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+.edwrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:560px}
+table.ed{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums}
+table.ed th{position:sticky;top:0;background:var(--navy-25);z-index:2;font-size:11.5px;color:var(--ink-2);font-weight:700;padding:6px 4px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.ed th .x{opacity:0;margin-left:2px}
+table.ed th:hover .x{opacity:1}
+table.ed td{border-bottom:1px solid var(--line);padding:0}
+table.ed .stopcol{position:sticky;left:0;background:#fff;z-index:1;border-right:1px solid var(--line);min-width:280px}
+table.ed th.stopcol{z-index:3;background:var(--navy-25);text-align:left;padding-left:12px}
+.sc{display:flex;align-items:center;gap:2px;padding:0 4px}
+.sc input{flex:1;border:none;outline:none;height:38px;padding:0 6px;font-weight:600;background:transparent;min-width:0}
+.sc input:focus{background:var(--navy-25)}
+.sc .ops{display:flex;opacity:0}
+tr:hover .sc .ops{opacity:1}
+.sc .iconbtn{width:24px;height:24px}
+.cell{width:62px;height:38px;border:none;outline:none;text-align:center;font-weight:600;background:transparent}
+.cell:focus{background:var(--navy-50);box-shadow:inset 0 0 0 2px var(--navy-700)}
+.cell:placeholder-shown{color:var(--line-2)}
+.cell.bad{background:var(--red-bg);color:var(--red)}
+.cell.chg{background:#FFFBEB}
+
+.modal-bg{position:fixed;inset:0;background:rgba(13,27,53,.55);display:none;align-items:center;justify-content:center;z-index:80;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:20px;width:520px;max-width:100%;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.modal h3{font-size:19px;font-weight:800;margin-bottom:6px}
+.toasts{position:fixed;right:24px;bottom:24px;display:flex;flex-direction:column;gap:10px;z-index:90}
+.toast{background:var(--navy-900);color:#fff;border-radius:14px;padding:13px 16px;min-width:280px;max-width:400px;box-shadow:0 14px 40px rgba(0,0,0,.3);animation:tin .25s ease-out}
+.toast.err{background:#7F1D1D}
+.toast b{display:block}
+.toast span{font-size:13px;color:rgba(255,255,255,.78)}
+@keyframes tin{from{transform:translateY(12px);opacity:0}}
+.aviso{border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;gap:14px;align-items:flex-start}
+.aviso+.aviso{margin-top:12px}
+.aviso .bar{width:5px;align-self:stretch;border-radius:3px;background:var(--navy-700)}
+.aviso.alerta .bar{background:#F59E0B}
+.aviso.off{opacity:.55}
+.linecheck{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px}
+.linecheck label{display:flex;gap:8px;align-items:center;font-size:13px}
+.log{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.log:last-child{border-bottom:none}
+.log .dot{width:10px;height:10px;border-radius:50%;background:var(--navy-700);margin-top:5px;flex-shrink:0}
+.bars{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:10px}
+.bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bars .b i{display:block;width:100%;background:var(--grad);border-radius:6px 6px 2px 2px;min-height:2px}
+.bars .b em{font-style:normal;font-size:11px;color:var(--ink-2);font-weight:600}
+.bars .b s{text-decoration:none;font-size:11px;font-weight:700;color:var(--navy-800)}
+@media (max-width:1000px){#shell{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:row;flex-wrap:wrap}.side-foot,.brand small{display:none}.g-4{grid-template-columns:1fr 1fr}.g-2,.g-main{grid-template-columns:1fr}.content{padding:20px 16px}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <form class="login-card" onsubmit="event.preventDefault();doLogin()">
+    <div class="row" style="gap:14px;margin-bottom:24px">
+      <div class="code" style="width:52px;height:52px;border-radius:14px;background:var(--grad)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 7h8"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg></div>
+      <div><div style="font-size:21px;font-weight:800;color:var(--navy-800)">Área da Empresa</div><div class="muted small">Fronteira Transportes · gestão de linhas e horários</div></div>
+    </div>
+    <div class="fg"><label class="f">E-mail</label><input class="inp" style="width:100%" id="lgEmail" type="email" value="operacao@fronteira.demo" required></div>
+    <div class="fg"><label class="f">Senha</label><input class="inp" style="width:100%" id="lgPass" type="password" value="demonstracao" required></div>
+    <button class="btn" style="width:100%;height:46px;margin-top:6px">Entrar</button>
+    <p class="small muted" style="margin-top:16px;line-height:1.5;background:var(--navy-25);border-radius:10px;padding:10px 12px">🔒 <b>Acesso de demonstração.</b> Qualquer e-mail e senha entram. Na versão final, o login será feito por um servidor com usuários da empresa.</p>
+    <a href="../desktop/" class="small" style="display:block;text-align:center;margin-top:14px;color:var(--navy-700);font-weight:700">← Voltar ao site do passageiro</a>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="shell">
+  <aside class="side">
+    <div class="brand"><div class="brand-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 7h8"/><circle cx="8" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg></div><div><b>Fronteira</b><small>Área da empresa</small></div></div>
+    <a class="nl" href="#/painel" data-k="painel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Painel</a>
+    <a class="nl" href="#/linhas" data-k="linhas"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/></svg>Linhas</a>
+    <a class="nl" href="#/horarios" data-k="horarios"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Horários</a>
+    <a class="nl" href="#/avisos" data-k="avisos"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a3 3 0 0 1 0 6"/></svg>Avisos</a>
+    <a class="nl" href="#/publicacao" data-k="publicacao"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Publicação <span class="badge" id="sideBadge" style="display:none"></span></a>
+    <a class="nl" href="../desktop/" target="_blank"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>Ver site do passageiro</a>
+    <div class="side-foot">
+      <div class="who"><div class="avatar" id="avatar">O</div><div style="min-width:0"><div style="font-weight:700;overflow:hidden;text-overflow:ellipsis" id="whoName">Operação</div><div style="color:rgba(255,255,255,.6);font-size:12px">Administrador</div></div></div>
+      <button class="btn sm" style="background:rgba(255,255,255,.12);width:100%" onclick="logout()">Sair</button>
+    </div>
+  </aside>
+  <div class="main">
+    <div class="pubbar" id="pubBar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="2.2"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>
+      <span><span id="pendN">0</span> alteração(ões) ainda não publicada(s). O site do passageiro só muda depois de publicar.</span>
+      <span style="margin-left:auto" class="row"><button class="btn ghost sm" onclick="discard()">Descartar</button><button class="btn green sm" onclick="publish()">Publicar no site</button></span>
+    </div>
+    <div class="content" id="view"></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" onmousedown="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
+<div class="toasts" id="toasts"></div>
+
+<script src="../desktop/dados.js"></script>
+<script src="../desktop/db.js"></script>
+<script>
+/* ================= UTIL ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const DIAS_C=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const TIME_RE=/^(\d{1,2}):(\d{2})$/;
+const toMin=t=>{const r=TIME_RE.exec(t||'');return r?+r[1]*60+ +r[2]:null};
+const fmt=m=>Math.floor(m/60)+':'+String(m%60).padStart(2,'0');
+function normTime(v){
+  v=String(v==null?'':v).trim();
+  if(v===''||v==='-'||v==='—'||v==='–')return null;
+  const r=/^(\d{1,2})\s*[:.hH]?\s*(\d{2})$/.exec(v);
+  if(r&&+r[1]<24&&+r[2]<60)return (+r[1])+':'+r[2];
+  return v; // mantém o valor inválido para ser destacado
+}
+function toast(t,s,err){const el=document.createElement('div');el.className='toast'+(err?' err':'');el.innerHTML=`<b>${esc(t)}</b>${s?`<span>${esc(s)}</span>`:''}`;$('#toasts').appendChild(el);setTimeout(()=>el.remove(),err?6000:3200)}
+function openModal(html){$('#modal').innerHTML=html;$('#modalBg').classList.add('open');const f=$('#modal input,#modal textarea');if(f)f.focus()}
+function closeModal(){$('#modalBg').classList.remove('open')}
+let _ok=null;
+function confirmBox(title,msg,okTxt,fn,danger=true){_ok=fn;openModal(`<h3>${esc(title)}</h3><p class="muted" style="margin:8px 0 22px;line-height:1.5">${msg}</p><div class="row" style="justify-content:flex-end"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn ${danger?'danger':''}" onclick="closeModal();_ok()">${esc(okTxt)}</button></div>`)}
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+const ss={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+
+/* ================= ESTADO ================= */
+let W=clone(DB.load());      // cópia de trabalho
+let PEND=[];                 // alterações não publicadas
+let E={id:null,b:0,d:0};     // editor de horários
+let LQ='',LF='todas';        // busca/filtro de linhas
+const LINE=id=>W.linhas.find(l=>l.id===id);
+function mark(msg){PEND.push(msg);updBar()}
+function updBar(){const n=new Set(PEND).size;$('#pubBar').classList.toggle('show',n>0);$('#pendN').textContent=n;const b=$('#sideBadge');b.style.display=n?'':'none';b.textContent=n}
+window.addEventListener('beforeunload',e=>{if(PEND.length){e.preventDefault();e.returnValue=''}});
+
+function tripCount(rows){return rows.length?Math.max(...rows.map(r=>r.length))-1:0}
+function cellBad(rows,i,j){
+  const v=rows[i][j+1];if(v==null||v==='')return false;
+  const m=toMin(v);if(m==null)return true;
+  for(let k=i-1;k>=0;k--){const p=toMin(rows[k][j+1]);if(p!=null)return m<p}
+  return false;
+}
+function scanInvalid(){
+  const out=[];
+  W.linhas.forEach(l=>(W.horarios[l.id]||[]).forEach((b,bi)=>b.dirs.forEach((d,di)=>{
+    let c=0;const n=tripCount(d.rows);d.rows.forEach((r,i)=>{for(let j=0;j<n;j++)if(cellBad(d.rows,i,j))c++});
+    if(c)out.push({l,bi,di,c,b,d});
+  })));
+  return out;
+}
+function tripsOnDay(l,dow){
+  if(l.status==='suspensa')return [];
+  const out=[];
+  (W.horarios[l.id]||[]).filter(b=>(b.days||[]).includes(dow)).forEach(b=>b.dirs.forEach(d=>{
+    const n=tripCount(d.rows);for(let j=0;j<n;j++){const ts=d.rows.map(r=>toMin(r[j+1])).filter(x=>x!=null);if(ts.length)out.push(Math.min(...ts))}
+  }));
+  return out;
+}
+
+/* ================= LOGIN ================= */
+function doLogin(){const e=$('#lgEmail').value.trim();if(!e)return;ss.set('fronteira:adm',e);boot()}
+function logout(){const go=()=>{ss.del('fronteira:adm');PEND=[];W=clone(DB.load());updBar();boot()};PEND.length?confirmBox('Sair sem publicar?','Você tem alterações não publicadas. Elas serão descartadas.','Sair e descartar',go):go()}
+function boot(){
+  const u=ss.get('fronteira:adm');
+  $('#login').style.display=u?'none':'grid';$('#shell').style.display=u?'grid':'none';
+  if(u){const nm=u.split('@')[0];$('#whoName').textContent=nm.charAt(0).toUpperCase()+nm.slice(1);$('#avatar').textContent=nm.charAt(0).toUpperCase();route()}
+}
+
+/* ================= ROUTER ================= */
+function go(h){location.hash=h}
+window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0)});
+function route(){
+  if(!ss.get('fronteira:adm'))return;
+  const p=(location.hash||'#/painel').slice(2).split('/').map(decodeURIComponent);
+  document.querySelectorAll('.side a.nl').forEach(a=>a.classList.toggle('on',a.dataset.k===p[0]||(p[0]==='linha'&&a.dataset.k==='linhas')));
+  ({painel:vPainel,linhas:vLinhas,linha:vLinha,horarios:vHorarios,avisos:vAvisos,publicacao:vPub}[p[0]]||vPainel)(p.slice(1));
+  updBar();
+}
+const view=h=>{$('#view').innerHTML=h};
+const codeBox=l=>`<div class="code ${l.tipo==='Seletivo'?'sel':''}">${esc(l.cod)}</div>`;
+const tipoTag=l=>l.tipo==='Seletivo'?'<span class="tag t-sel">Seletivo</span>':'<span class="tag t-urb">Urbana</span>';
+const ICO={
+  edit:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>',
+  clock:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  del:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  x:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  up:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 15 6-6 6 6"/></svg>',
+  down:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m6 9 6 6 6-6"/></svg>',
+};
+
+/* ================= PAINEL ================= */
+function vPainel(){
+  const ativas=W.linhas.filter(l=>l.status!=='suspensa').length;
+  const semH=W.linhas.filter(l=>!(W.horarios[l.id]||[]).length);
+  const util=W.linhas.flatMap(l=>tripsOnDay(l,2));
+  const sab=W.linhas.flatMap(l=>tripsOnDay(l,6));
+  const avAt=(W.avisos||[]).filter(a=>a.ativo).length;
+  const inv=scanInvalid();
+  const hrs=[];for(let h=6;h<=20;h++)hrs.push({h,n:util.filter(t=>Math.floor(t/60)===h).length});
+  const mx=Math.max(1,...hrs.map(x=>x.n));
+  const ultimo=W.log&&W.log[0];
+  view(`<div class="page-h"><div><div class="crumb">Visão geral</div><h1>Painel de operação</h1></div>
+    <div class="row"><a class="btn ghost" href="#/avisos">+ Novo aviso</a><a class="btn" href="#/linha/nova">+ Nova linha</a></div></div>
+  <div class="grid g-4" style="margin-bottom:18px">
+    ${kpi(ativas+' / '+W.linhas.length,'linhas ativas','<rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16"/>')}
+    ${kpi(util.length,'viagens em dia útil','<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>')}
+    ${kpi(sab.length,'viagens no sábado','<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>')}
+    ${kpi(avAt,'avisos no ar','<path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/>')}
+  </div>
+  <div class="grid g-main">
+    <div class="card"><div class="card-h"><div><h2>Saídas por hora · dia útil</h2><div class="small muted">Início de cada viagem, todas as linhas</div></div><span class="tag t-urb">${util.length} viagens</span></div>
+      <div class="bars">${hrs.map(x=>`<div class="b"><s>${x.n||''}</s><i style="height:${x.n/mx*100}%"></i><em>${x.h}h</em></div>`).join('')}</div>
+    </div>
+    <div class="card"><div class="card-h"><h2>Pendências</h2><span class="tag ${semH.length+inv.length?'t-sel':'t-ativa'}">${semH.length+inv.length}</span></div>
+      ${inv.map(x=>`<a class="row" style="padding:9px 0;border-bottom:1px solid var(--line)" href="#/horarios/${x.l.id}" onclick="E={id:'${x.l.id}',b:${x.bi},d:${x.di}}"><span class="tag t-red">${x.c} erro(s)</span><span style="flex:1;font-weight:600">${esc(x.l.nome)}</span><span class="small muted">${esc(x.d.dir)}</span></a>`).join('')}
+      ${semH.map(l=>`<a class="row" style="padding:9px 0;border-bottom:1px solid var(--line)" href="#/horarios/${l.id}">${codeBox(l)}<span style="flex:1;font-weight:600">${esc(l.nome)}</span><span class="small muted">sem horário</span></a>`).join('')||'<div class="empty small">Tudo em dia 🎉</div>'}
+    </div>
+  </div>
+  <div class="grid g-2" style="margin-top:18px">
+    <div class="card"><div class="card-h"><h2>Status da publicação</h2><a class="small" style="color:var(--navy-700);font-weight:700" href="#/publicacao">Gerenciar →</a></div>
+      <div class="row" style="gap:14px"><span class="tag ${W.origem==='editado'?'t-urb':'t-ativa'}">${W.origem==='editado'?'Dados da empresa':'Dados oficiais do site'}</span>
+      <span class="small muted">${W.atualizado?'Última publicação: '+new Date(W.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'Nenhuma publicação feita pelo painel ainda'}</span></div>
+      ${PEND.length?`<div class="row" style="margin-top:14px;background:var(--amber-bg);border-radius:10px;padding:10px 12px;color:#78350F;font-weight:600">${new Set(PEND).size} alteração(ões) aguardando publicação</div>`:''}
+    </div>
+    <div class="card"><div class="card-h"><h2>Atividade recente</h2></div>
+      ${ultimo?W.log.slice(0,3).map(logItem).join(''):'<div class="empty small">As publicações feitas pela equipe aparecem aqui.</div>'}
+    </div>
+  </div>`);
+}
+function kpi(v,t,ic){return `<div class="card kpi"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#003580" stroke-width="2">${ic}</svg></div><b>${v}</b><span>${t}</span></div>`}
+function logItem(g){return `<div class="log"><div class="dot"></div><div><div style="font-weight:700">${esc(g.usuario||'admin')} publicou ${g.itens.length} alteração(ões)</div><div class="small muted">${new Date(g.t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})}</div><ul class="small" style="margin:6px 0 0 18px;color:var(--ink)">${g.itens.slice(0,5).map(i=>`<li>${esc(i)}</li>`).join('')}${g.itens.length>5?`<li class="muted">+ ${g.itens.length-5} outras</li>`:''}</ul></div></div>`}
+
+/* ================= LINHAS ================= */
+function vLinhas(){
+  view(`<div class="page-h"><div><div class="crumb">Cadastro</div><h1>Linhas</h1></div><a class="btn" href="#/linha/nova">+ Nova linha</a></div>
+  <div class="card">
+    <div class="row wrap" style="margin-bottom:16px">
+      <input class="inp" style="flex:1;min-width:220px" placeholder="Buscar por nome ou código…" value="${esc(LQ)}" oninput="LQ=this.value;renderLinhas()">
+      ${['todas','Urbana','Seletivo','suspensa'].map(f=>`<button class="chip ${LF===f?'on':''}" onclick="LF='${f}';vLinhas()">${{todas:'Todas',Urbana:'Urbanas',Seletivo:'Seletivo',suspensa:'Suspensas'}[f]}</button>`).join('')}
+    </div>
+    <table class="list"><thead><tr><th>Linha</th><th>Tipo</th><th>Horários</th><th>Viagens/dia útil</th><th>Ativa</th><th style="text-align:right">Ações</th></tr></thead><tbody id="ltb"></tbody></table>
+  </div>`);
+  renderLinhas();
+}
+function renderLinhas(){
+  const q=DB.slug(LQ);
+  const list=W.linhas.filter(l=>(LF==='todas'||l.tipo===LF||(LF==='suspensa'&&l.status==='suspensa'))&&(!q||DB.slug(l.nome+' '+l.cod+' '+l.desc).includes(q)));
+  $('#ltb').innerHTML=list.map(l=>{const H=W.horarios[l.id]||[];const vu=tripsOnDay({...l,status:'ativa'},2).length;
+    return `<tr><td><div class="row">${codeBox(l)}<div><div style="font-weight:700">${esc(l.nome)}</div><div class="small muted">${esc(l.desc)}</div></div></div></td>
+    <td>${tipoTag(l)}</td>
+    <td>${H.length?H.map(b=>`<span class="tag t-urb" style="margin:0 4px 4px 0;display:inline-block">${esc(daysLabel(b.days))}</span>`).join(''):'<span class="tag t-off">Sem horário</span>'}</td>
+    <td style="font-weight:700">${vu||'—'}</td>
+    <td><button class="switch ${l.status!=='suspensa'?'on':''}" title="Ativar/suspender" onclick="toggleStatus('${l.id}')"></button></td>
+    <td><div class="row" style="justify-content:flex-end;gap:4px"><a class="iconbtn" title="Editar dados" href="#/linha/${l.id}">${ICO.edit}</a><a class="iconbtn" title="Editar horários" href="#/horarios/${l.id}">${ICO.clock}</a><button class="iconbtn del" title="Excluir" onclick="delLinha('${l.id}')">${ICO.del}</button></div></td></tr>`}).join('')||`<tr><td colspan="6"><div class="empty">Nenhuma linha encontrada.</div></td></tr>`;
+}
+function daysLabel(d){
+  d=[...(d||[])].sort();const k=d.join(',');
+  if(k==='1,2,3,4,5')return 'Seg–Sex';if(k==='1,2,3,4,5,6')return 'Seg–Sáb';if(k==='0,1,2,3,4,5,6')return 'Todos os dias';
+  return d.map(x=>DIAS_C[x]).join(', ')||'Sem dias';
+}
+function toggleStatus(id){const l=LINE(id);l.status=l.status==='suspensa'?'ativa':'suspensa';mark(`Linha ${l.nome} ${l.status==='suspensa'?'suspensa':'reativada'}`);toast(l.status==='suspensa'?'Linha suspensa':'Linha reativada',l.nome+' · publique para valer no site');route()}
+function delLinha(id){const l=LINE(id);confirmBox('Excluir linha?',`A linha <b>${esc(l.nome)}</b> e todos os seus horários serão removidos do site após a publicação.`,'Excluir linha',()=>{W.linhas=W.linhas.filter(x=>x.id!==id);delete W.horarios[id];W.avisos.forEach(a=>a.linhas=a.linhas.filter(x=>x!==id));mark(`Linha ${l.nome} excluída`);toast('Linha excluída',l.nome);go('#/linhas');route()})}
+
+function vLinha([id]){
+  const novo=id==='nova';
+  const l=novo?{id:'',nome:'',cod:'',tipo:'Urbana',desc:'',status:'ativa'}:LINE(id);
+  if(!l)return go('#/linhas');
+  const H=novo?[]:(W.horarios[l.id]||[]);
+  view(`<div class="page-h"><div><div class="crumb"><a href="#/linhas">Linhas</a> / ${novo?'Nova':esc(l.nome)}</div><h1>${novo?'Nova linha':'Editar linha'}</h1></div>
+    ${novo?'':`<div class="row"><a class="btn ghost" target="_blank" href="../desktop/#/linha/${l.id}">Ver no site</a><a class="btn" href="#/horarios/${l.id}">${ICO.clock} Editar horários</a></div>`}</div>
+  <div class="grid g-main">
+    <form class="card" onsubmit="event.preventDefault();saveLinha('${novo?'':l.id}')">
+      <h2 style="margin-bottom:18px">Dados da linha</h2>
+      <div class="fg"><label class="f">Nome da linha *</label><input class="inp" style="width:100%" id="fNome" value="${esc(l.nome)}" required placeholder="Ex.: Centro - Vila Nova"></div>
+      <div class="row" style="align-items:flex-start;gap:14px">
+        <div class="fg" style="width:130px"><label class="f">Código *</label><input class="inp" style="width:100%;text-transform:uppercase;font-weight:800" id="fCod" value="${esc(l.cod)}" maxlength="3" required placeholder="CV"></div>
+        <div class="fg" style="flex:1"><label class="f">Tipo</label><select class="inp" style="width:100%" id="fTipo"><option ${l.tipo==='Urbana'?'selected':''}>Urbana</option><option ${l.tipo==='Seletivo'?'selected':''}>Seletivo</option></select></div>
+      </div>
+      <div class="fg"><label class="f">Descrição (aparece abaixo do nome)</label><input class="inp" style="width:100%" id="fDesc" value="${esc(l.desc)}" placeholder="Ex.: Segunda a sábado"></div>
+      <label class="row" style="margin:6px 0 22px;cursor:pointer"><input type="checkbox" id="fAtiva" ${l.status!=='suspensa'?'checked':''}> <span><b>Linha ativa</b> <span class="muted small">· desmarque para suspender temporariamente</span></span></label>
+      <div class="row"><button class="btn">${novo?'Criar linha e cadastrar horários':'Salvar alterações'}</button><a class="btn ghost" href="#/linhas">Cancelar</a></div>
+    </form>
+    <div>
+      <div class="card"><h2 style="margin-bottom:12px">Pré-visualização</h2>
+        <div style="border:1px solid var(--line);border-radius:14px;padding:16px" id="prev"></div></div>
+      ${novo?'':`<div class="card"><h2 style="margin-bottom:12px">Tabelas de horário</h2>
+        ${H.length?H.map(b=>`<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:700">${esc(b.day)}</div><div class="small muted">${b.dirs.length} sentido(s) · ${b.dirs.reduce((a,d)=>a+tripCount(d.rows),0)} viagens</div></div><span class="tag t-urb">${daysLabel(b.days)}</span></div>`).join(''):'<div class="empty small">Nenhuma tabela cadastrada.</div>'}
+      </div>
+      <div class="card" style="border-color:#FCA5A5"><h2 style="margin-bottom:6px;color:var(--red)">Zona de perigo</h2><p class="small muted" style="margin-bottom:12px">Excluir remove a linha e todos os horários do site.</p><button class="btn danger" onclick="delLinha('${l.id}')">${ICO.del} Excluir linha</button></div>`}
+    </div>
+  </div>`);
+  const upd=()=>{const t={nome:$('#fNome').value||'Nome da linha',cod:($('#fCod').value||'??').toUpperCase(),tipo:$('#fTipo').value,desc:$('#fDesc').value};
+    $('#prev').innerHTML=`<div class="row" style="margin-bottom:10px">${tipoTag(t)}<span class="tag ${$('#fAtiva').checked?'t-ativa':'t-sel'}">${$('#fAtiva').checked?'Ativa':'Suspensa'}</span></div><div class="row">${codeBox(t)}<div><div style="font-weight:700;font-size:15px">${esc(t.nome)}</div><div class="small muted">${esc(t.desc)}</div></div></div>`};
+  ['#fNome','#fCod','#fTipo','#fDesc','#fAtiva'].forEach(s=>$(s).addEventListener('input',upd));upd();
+}
+function saveLinha(oldId){
+  const nome=$('#fNome').value.trim(),cod=$('#fCod').value.trim().toUpperCase();
+  if(!nome||!cod)return toast('Preencha nome e código','',true);
+  if(W.linhas.some(x=>x.cod===cod&&x.id!==oldId))return toast('Código já usado',`Outra linha já usa o código ${cod}.`,true);
+  const data={nome,cod,tipo:$('#fTipo').value,desc:$('#fDesc').value.trim(),status:$('#fAtiva').checked?'ativa':'suspensa'};
+  if(!oldId){
+    let id=DB.slug(nome)||'linha',k=2;while(LINE(id))id=DB.slug(nome)+'-'+(k++);
+    W.linhas.push({id,...data});mark(`Linha ${nome} criada`);toast('Linha criada','Agora cadastre os horários');go('#/horarios/'+id);
+  }else{
+    Object.assign(LINE(oldId),data);mark(`Linha ${nome} atualizada`);toast('Linha atualizada',nome);go('#/linhas');
+  }
+}
+
+/* ================= HORÁRIOS ================= */
+function vHorarios([id]){
+  const l=LINE(id)||LINE(E.id)||W.linhas.find(x=>(W.horarios[x.id]||[]).length)||W.linhas[0];
+  if(!l)return view('<div class="empty">Cadastre uma linha primeiro.</div>');
+  if(id!==l.id&&location.hash!=='#/horarios/'+l.id)history.replaceState(null,'','#/horarios/'+l.id);
+  if(E.id!==l.id)E={id:l.id,b:0,d:0};
+  const H=W.horarios[l.id]||[];
+  if(E.b>=H.length)E.b=Math.max(0,H.length-1);
+  const B=H[E.b];if(B&&E.d>=B.dirs.length)E.d=0;
+  const Dr=B&&B.dirs[E.d];
+  view(`<div class="page-h"><div><div class="crumb">Horários</div><h1>Editor de horários</h1></div>
+    <div class="row"><select class="inp" style="min-width:300px;font-weight:700" onchange="go('#/horarios/'+this.value)">${W.linhas.map(x=>`<option value="${x.id}" ${x.id===l.id?'selected':''}>${esc(x.cod)} · ${esc(x.nome)}${(W.horarios[x.id]||[]).length?'':' (sem horário)'}</option>`).join('')}</select>
+    <a class="btn ghost" target="_blank" href="../desktop/#/linha/${l.id}">Ver no site</a></div></div>
+  ${!H.length?`<div class="card"><div class="empty"><div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px">${esc(l.nome)} ainda não tem horários</div>Crie uma tabela (por exemplo, "Segunda a Sexta-feira") e depois preencha as paradas e as viagens.<br><br><button class="btn" onclick="addBlock()">+ Criar tabela de horários</button></div></div>`:`
+  <div class="card">
+    <div class="row wrap" style="margin-bottom:16px"><span class="small muted" style="font-weight:700;margin-right:4px">TABELAS</span>${H.map((b,i)=>`<button class="chip ${i===E.b?'on':''}" onclick="E.b=${i};E.d=0;route()">${esc(b.day)}</button>`).join('')}<button class="chip add" onclick="addBlock()">+ Nova tabela</button></div>
+    <div class="row wrap" style="gap:18px;align-items:flex-end">
+      <div style="flex:1;min-width:240px"><label class="f">Nome da tabela (aparece no site)</label><input class="inp" style="width:100%" value="${esc(B.day)}" onchange="setBlockName(this.value)"></div>
+      <div><label class="f">Vale para os dias</label><div class="days">${[1,2,3,4,5,6,0].map(d=>`<label><input type="checkbox" ${B.days.includes(d)?'checked':''} onchange="toggleDay(${d},this.checked)"><span>${DIAS_C[d]}</span></label>`).join('')}</div></div>
+      <button class="btn danger sm" style="height:34px" onclick="delBlock()">${ICO.del} Excluir tabela</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h">
+      <div class="tabs">${B.dirs.map((d,i)=>`<button class="${i===E.d?'on':''}" onclick="E.d=${i};route()">${esc(d.dir)}</button>`).join('')}<button class="add" onclick="addDir()">+ Sentido</button></div>
+      <div class="row"><span class="small muted" id="edStats"></span></div>
+    </div>
+    ${Dr?`<div class="row wrap" style="margin-bottom:14px">
+      <input class="inp" style="width:280px;font-weight:700" value="${esc(Dr.dir)}" onchange="renameDir(this.value)" title="Nome do sentido">
+      <button class="btn ghost sm" onclick="addStop()">+ Parada</button>
+      <button class="btn ghost sm" onclick="addTrip()">+ Viagem</button>
+      <button class="btn ghost sm" onclick="shiftModal()">Deslocar horários</button>
+      <button class="btn ghost sm" onclick="pasteModal()">Colar da planilha</button>
+      <button class="btn danger sm" style="margin-left:auto" onclick="delDir()">${ICO.del} Excluir sentido</button>
+    </div>
+    <div class="edwrap" id="edwrap"></div>
+    <div class="row small muted wrap" style="margin-top:12px;gap:18px">
+      <span>Digite <b>7:15</b>, <b>715</b> ou <b>7.15</b>. Deixe vazio quando a viagem não passa na parada.</span>
+      <span class="row" style="gap:6px"><i style="width:12px;height:12px;border-radius:3px;background:var(--red-bg);border:1px solid #FCA5A5"></i>Horário inválido ou antes da parada anterior</span>
+      <span>↑ ↓ Enter: navegar</span>
+    </div>`:'<div class="empty">Crie um sentido para começar.</div>'}
+  </div>`}`);
+  if(Dr)renderTable();
+}
+const curH=()=>W.horarios[E.id];
+const curB=()=>curH()[E.b];
+const curD=()=>curB().dirs[E.d];
+function pad(rows){const n=tripCount(rows);rows.forEach(r=>{while(r.length<n+1)r.push(null)});return n}
+function renderTable(){
+  const D=curD();const n=pad(D.rows);
+  let bad=0;
+  const head=`<tr><th class="stopcol">Parada</th>${Array.from({length:n},(_,j)=>`<th>${j+1}ª<button class="iconbtn del x" style="width:18px;height:18px;display:inline-grid" title="Excluir viagem" onclick="delTrip(${j})">${ICO.x}</button></th>`).join('')}</tr>`;
+  const body=D.rows.map((r,i)=>`<tr><td class="stopcol"><div class="sc"><input value="${esc(r[0])}" onchange="setStop(${i},this.value)" title="Nome da parada"><span class="ops"><button class="iconbtn" title="Subir" onclick="moveStop(${i},-1)">${ICO.up}</button><button class="iconbtn" title="Descer" onclick="moveStop(${i},1)">${ICO.down}</button><button class="iconbtn del" title="Excluir parada" onclick="delStop(${i})">${ICO.x}</button></span></div></td>${
+    Array.from({length:n},(_,j)=>{const b=cellBad(D.rows,i,j);if(b)bad++;return `<td><input class="cell ${b?'bad':''}" data-i="${i}" data-j="${j}" value="${esc(r[j+1]||'')}" placeholder="—" onchange="setCell(${i},${j},this)" onkeydown="cellKey(event,${i},${j})"></td>`}).join('')}</tr>`).join('');
+  $('#edwrap').innerHTML=D.rows.length?`<table class="ed"><thead>${head}</thead><tbody>${body}</tbody></table>`:'<div class="empty" style="border:none">Sem paradas. Use <b>+ Parada</b> ou <b>Colar da planilha</b>.</div>';
+  stats(bad);
+}
+function stats(bad){const D=curD();$('#edStats').innerHTML=`${D.rows.length} paradas · ${tripCount(D.rows)} viagens${bad?` · <b style="color:var(--red)">${bad} com erro</b>`:''}`}
+function setCell(i,j,el){
+  const D=curD();const v=normTime(el.value);D.rows[i][j+1]=v;el.value=v||'';el.classList.add('chg');
+  let bad=0;document.querySelectorAll('#edwrap .cell').forEach(c=>{const b=cellBad(D.rows,+c.dataset.i,+c.dataset.j);c.classList.toggle('bad',b);if(b)bad++});stats(bad);
+  mark(`Horários de ${LINE(E.id).nome} (${D.dir}) editados`);
+}
+function cellKey(e,i,j){
+  let ni=i,nj=j;
+  if(e.key==='ArrowDown'||e.key==='Enter')ni=i+1;else if(e.key==='ArrowUp')ni=i-1;
+  else if(e.key==='ArrowRight'&&e.target.selectionStart===e.target.value.length)nj=j+1;
+  else if(e.key==='ArrowLeft'&&e.target.selectionStart===0)nj=j-1;else return;
+  const t=document.querySelector(`.cell[data-i="${ni}"][data-j="${nj}"]`);if(t){e.preventDefault();e.target.dispatchEvent(new Event('change'));t.focus();t.select()}
+}
+function setStop(i,v){curD().rows[i][0]=v.trim()||'Parada sem nome';mark(`Paradas de ${LINE(E.id).nome} editadas`)}
+function moveStop(i,dlt){const r=curD().rows;const k=i+dlt;if(k<0||k>=r.length)return;[r[i],r[k]]=[r[k],r[i]];mark(`Ordem das paradas de ${LINE(E.id).nome} alterada`);renderTable()}
+function delStop(i){const r=curD().rows;confirmBox('Excluir parada?',`A parada <b>${esc(r[i][0])}</b> e seus horários serão removidos deste sentido.`,'Excluir',()=>{r.splice(i,1);mark(`Parada removida de ${LINE(E.id).nome}`);renderTable()})}
+function addStop(){const D=curD();const n=tripCount(D.rows);D.rows.push(['Nova parada',...Array(n).fill(null)]);mark(`Parada adicionada em ${LINE(E.id).nome}`);renderTable();const ins=document.querySelectorAll('#edwrap .sc input');const el=ins[ins.length-1];if(el){el.focus();el.select()}}
+function addTrip(){
+  const D=curD();const n=pad(D.rows);
+  if(!D.rows.length)return toast('Adicione paradas primeiro','',true);
+  D.rows.forEach(r=>{const p=n?toMin(r[n]):null;r.push(p!=null?fmt((p+60)%1440):null)});
+  mark(`Viagem adicionada em ${LINE(E.id).nome}`);toast('Viagem adicionada',n?'Copiada da última viagem com +60 min. Ajuste se precisar.':'Preencha os horários.');renderTable();
+  const w=$('#edwrap');w.scrollLeft=w.scrollWidth;
+}
+function delTrip(j){const D=curD();confirmBox('Excluir viagem?',`A ${j+1}ª viagem deste sentido será removida.`,'Excluir',()=>{D.rows.forEach(r=>r.splice(j+1,1));mark(`Viagem removida de ${LINE(E.id).nome}`);renderTable()})}
+function shiftModal(){
+  const D=curD();const n=tripCount(D.rows);
+  openModal(`<h3>Deslocar horários</h3><p class="muted small" style="margin-bottom:16px">Adianta ou atrasa todos os horários de uma ou de todas as viagens deste sentido. Útil quando muda o itinerário ou o trânsito.</p>
+  <div class="row" style="gap:12px;margin-bottom:20px"><div style="flex:1"><label class="f">Viagem</label><select class="inp" style="width:100%" id="shT"><option value="-1">Todas as viagens</option>${Array.from({length:n},(_,j)=>{const ts=D.rows.map(r=>toMin(r[j+1])).filter(x=>x!=null);return `<option value="${j}">${j+1}ª · saída ${ts.length?fmt(Math.min(...ts)):'—'}</option>`}).join('')}</select></div>
+  <div style="width:150px"><label class="f">Minutos (+/-)</label><input class="inp" style="width:100%" id="shM" type="number" value="5"></div></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="doShift()">Aplicar</button></div>`);
+}
+function doShift(){
+  const D=curD();const j=+$('#shT').value,m=parseInt($('#shM').value,10);if(!m)return closeModal();
+  const n=tripCount(D.rows);const cols=j<0?[...Array(n).keys()]:[j];
+  D.rows.forEach(r=>cols.forEach(c=>{const t=toMin(r[c+1]);if(t!=null)r[c+1]=fmt(((t+m)%1440+1440)%1440)}));
+  closeModal();mark(`Horários de ${LINE(E.id).nome} deslocados ${m>0?'+':''}${m} min`);toast('Horários deslocados',`${m>0?'+':''}${m} min em ${j<0?'todas as viagens':'uma viagem'}`);renderTable();
+}
+function pasteModal(){
+  openModal(`<h3>Colar da planilha</h3><p class="muted small" style="margin-bottom:12px;line-height:1.5">Copie a tabela do Excel, Google Planilhas ou do site antigo e cole abaixo. <b>Uma parada por linha</b>: primeiro o nome da parada, depois os horários separados por tabulação ou ponto e vírgula. Use "—" ou deixe vazio quando a viagem não passa.</p>
+  <textarea class="inp" id="pasteTx" rows="9" style="width:100%;font-family:Consolas,monospace;font-size:13px" placeholder="Terminal&#9;6:40&#9;7:40&#9;8:40&#10;Unipampa&#9;6:52&#9;7:52&#9;8:52"></textarea>
+  <div id="pastePrev" class="small muted" style="margin:8px 0 16px"></div>
+  <div class="row" style="justify-content:flex-end"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="doPaste()">Substituir tabela deste sentido</button></div>`);
+  $('#pasteTx').addEventListener('input',()=>{const r=parsePaste($('#pasteTx').value);$('#pastePrev').textContent=r.length?`${r.length} paradas · ${tripCount(r)} viagens detectadas`:''});
+}
+function parsePaste(tx){return tx.split(/\r?\n/).map(l=>l.replace(/\s+$/,'')).filter(l=>l.trim()).map(l=>{const c=l.split(/\t|;/);return [c[0].trim(),...c.slice(1).map(normTime)]})}
+function doPaste(){const r=parsePaste($('#pasteTx').value);if(!r.length)return toast('Nada para colar','',true);curD().rows=r;pad(r);closeModal();mark(`Tabela de ${LINE(E.id).nome} importada da planilha`);toast('Tabela importada',`${r.length} paradas · ${tripCount(r)} viagens`);renderTable()}
+function addBlock(){
+  const H=W.horarios[E.id]||(W.horarios[E.id]=[]);
+  const has=H.flatMap(b=>b.days);const sug=!has.some(d=>d>=1&&d<=5)?{day:'Segunda a Sexta-feira',days:[1,2,3,4,5]}:!has.includes(6)?{day:'Sábado',days:[6]}:{day:'Domingo',days:[0]};
+  const base=H[E.b]&&H[E.b].dirs.length?H[E.b].dirs.map(d=>({dir:d.dir,rows:d.rows.map(r=>[r[0]])})):[{dir:'Ida',rows:[]}];
+  H.push({...sug,dirs:base});E.b=H.length-1;E.d=0;mark(`Tabela "${sug.day}" criada em ${LINE(E.id).nome}`);route();
+}
+function setBlockName(v){curB().day=v.trim()||'Tabela';mark(`Tabela de ${LINE(E.id).nome} renomeada`);route()}
+function toggleDay(d,on){const b=curB();b.days=on?[...new Set([...b.days,d])]:b.days.filter(x=>x!==d);mark(`Dias da tabela "${b.day}" (${LINE(E.id).nome}) alterados`)}
+function delBlock(){const b=curB();confirmBox('Excluir tabela?',`A tabela <b>${esc(b.day)}</b> com todos os sentidos e viagens será removida.`,'Excluir tabela',()=>{curH().splice(E.b,1);E.b=0;E.d=0;mark(`Tabela "${b.day}" excluída de ${LINE(E.id).nome}`);route()})}
+function addDir(){
+  const B=curB();const src=B.dirs[E.d];
+  const nd=src?{dir:src.dir.includes('→')?src.dir.split('→').map(s=>s.trim()).reverse().join(' → '):'Volta',rows:[...src.rows].reverse().map(r=>[r[0]])}:{dir:'Ida',rows:[]};
+  B.dirs.push(nd);E.d=B.dirs.length-1;mark(`Sentido "${nd.dir}" criado em ${LINE(E.id).nome}`);toast('Sentido criado',src?'Paradas copiadas em ordem inversa. Agora preencha os horários.':'');route();
+}
+function renameDir(v){curD().dir=v.trim()||'Sentido';mark(`Sentido renomeado em ${LINE(E.id).nome}`);route()}
+function delDir(){const d=curD();confirmBox('Excluir sentido?',`O sentido <b>${esc(d.dir)}</b> e todas as viagens dele serão removidos.`,'Excluir sentido',()=>{curB().dirs.splice(E.d,1);E.d=0;mark(`Sentido "${d.dir}" excluído de ${LINE(E.id).nome}`);route()})}
+
+/* ================= AVISOS ================= */
+function vAvisos(){
+  const A=W.avisos||(W.avisos=[]);
+  view(`<div class="page-h"><div><div class="crumb">Comunicação</div><h1>Avisos aos passageiros</h1></div><button class="btn" onclick="avisoModal()">+ Novo aviso</button></div>
+  <div class="grid g-main"><div class="card">
+    ${A.length?A.map((a,i)=>`<div class="aviso ${a.tipo} ${a.ativo?'':'off'}"><div class="bar"></div><div style="flex:1"><div class="row" style="margin-bottom:4px"><b style="font-size:15px">${esc(a.titulo)}</b><span class="tag ${a.tipo==='alerta'?'t-sel':'t-urb'}">${a.tipo==='alerta'?'Alerta':'Informativo'}</span>${a.ativo?'<span class="tag t-ativa">No ar</span>':'<span class="tag t-off">Pausado</span>'}</div>
+      <div class="muted" style="line-height:1.5">${esc(a.texto)}</div>
+      <div class="small muted" style="margin-top:8px">${a.linhas.length?'Aparece em: '+a.linhas.map(id=>LINE(id)?esc(LINE(id).cod):'').filter(Boolean).join(', ')+' e na página inicial':'Aparece na página inicial do site'}</div></div>
+      <div class="row" style="gap:4px"><button class="switch ${a.ativo?'on':''}" title="Ativar/pausar" onclick="W.avisos[${i}].ativo=!W.avisos[${i}].ativo;mark('Aviso &quot;'+W.avisos[${i}].titulo+'&quot; '+(W.avisos[${i}].ativo?'ativado':'pausado'));vAvisos()"></button><button class="iconbtn" onclick="avisoModal(${i})">${ICO.edit}</button><button class="iconbtn del" onclick="delAviso(${i})">${ICO.del}</button></div></div>`).join(''):'<div class="empty">Nenhum aviso cadastrado.</div>'}
+  </div>
+  <div class="card" style="align-self:start"><h2 style="margin-bottom:10px">Como os avisos aparecem</h2><p class="small muted" style="line-height:1.6">Todos os avisos <b>no ar</b> aparecem na página inicial do site do passageiro. Avisos ligados a uma linha também aparecem na página de horários dela.<br><br>Use <b>Alerta</b> (amarelo) para mudanças que afetam a viagem (desvios, suspensões, feriados) e <b>Informativo</b> (azul) para o restante.</p></div></div>`);
+}
+function avisoModal(i){
+  const a=i!=null?W.avisos[i]:{titulo:'',texto:'',tipo:'alerta',linhas:[],ativo:true};
+  openModal(`<h3>${i!=null?'Editar aviso':'Novo aviso'}</h3>
+  <div class="fg" style="margin-top:14px"><label class="f">Título *</label><input class="inp" style="width:100%" id="avT" value="${esc(a.titulo)}" placeholder="Ex.: Desvio na Av. Rondon"></div>
+  <div class="fg"><label class="f">Mensagem *</label><textarea class="inp" style="width:100%" id="avX" rows="3" placeholder="Ex.: Devido a obras, os ônibus não passam na parada Daer até sexta.">${esc(a.texto)}</textarea></div>
+  <div class="row" style="gap:12px"><div class="fg" style="flex:1"><label class="f">Tipo</label><select class="inp" style="width:100%" id="avK"><option value="alerta" ${a.tipo==='alerta'?'selected':''}>Alerta (amarelo)</option><option value="info" ${a.tipo==='info'?'selected':''}>Informativo (azul)</option></select></div>
+  <label class="row fg" style="margin-top:18px"><input type="checkbox" id="avA" ${a.ativo?'checked':''}> Publicar no ar</label></div>
+  <div class="fg"><label class="f">Linhas afetadas (opcional)</label><div class="linecheck">${W.linhas.map(l=>`<label><input type="checkbox" value="${l.id}" ${a.linhas.includes(l.id)?'checked':''}>${esc(l.cod)} · ${esc(l.nome)}</label>`).join('')}</div></div>
+  <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveAviso(${i!=null?i:-1})">Salvar aviso</button></div>`);
+}
+function saveAviso(i){
+  const t=$('#avT').value.trim(),x=$('#avX').value.trim();if(!t||!x)return toast('Preencha título e mensagem','',true);
+  const a={titulo:t,texto:x,tipo:$('#avK').value,ativo:$('#avA').checked,linhas:[...document.querySelectorAll('.linecheck input:checked')].map(c=>c.value)};
+  if(i<0){a.id=Date.now();W.avisos.unshift(a);mark(`Aviso "${t}" criado`)}else{Object.assign(W.avisos[i],a);mark(`Aviso "${t}" editado`)}
+  closeModal();toast('Aviso salvo','Publique para aparecer no site');vAvisos();
+}
+function delAviso(i){const a=W.avisos[i];confirmBox('Excluir aviso?',`O aviso <b>${esc(a.titulo)}</b> será removido.`,'Excluir',()=>{W.avisos.splice(i,1);mark(`Aviso "${a.titulo}" excluído`);vAvisos()})}
+
+/* ================= PUBLICAÇÃO ================= */
+function publish(){
+  const inv=scanInvalid();
+  if(inv.length){E={id:inv[0].l.id,b:inv[0].bi,d:inv[0].di};toast('Corrija os horários antes de publicar',`${inv.reduce((a,x)=>a+x.c,0)} horário(s) inválido(s) em ${inv[0].l.nome}`,true);return go('#/horarios/'+inv[0].l.id)}
+  const itens=[...new Set(PEND)];
+  W.log=[{t:Date.now(),usuario:$('#whoName').textContent,itens},...(W.log||[])].slice(0,50);
+  try{DB.save(W)}catch(e){return toast('Não foi possível salvar','O navegador bloqueou o armazenamento local.',true)}
+  W=clone(DB.load());PEND=[];toast('Publicado! ✅','O site do passageiro já mostra as alterações.');route();
+}
+function discard(){confirmBox('Descartar alterações?','Tudo o que foi editado desde a última publicação será perdido.','Descartar',()=>{W=clone(DB.load());PEND=[];toast('Alterações descartadas','');route()})}
+function vPub(){
+  const n=new Set(PEND).size;
+  view(`<div class="page-h"><div><div class="crumb">Dados</div><h1>Publicação e backup</h1></div></div>
+  <div class="grid g-2">
+    <div class="card"><h2 style="margin-bottom:12px">Publicar alterações</h2>
+      ${n?`<p class="muted" style="margin-bottom:12px">${n} alteração(ões) aguardando:</p><ul style="margin:0 0 16px 18px;line-height:1.7">${[...new Set(PEND)].slice(0,8).map(x=>`<li>${esc(x)}</li>`).join('')}${n>8?`<li class="muted">+ ${n-8} outras</li>`:''}</ul>
+      <div class="row"><button class="btn green" onclick="publish()">Publicar no site</button><button class="btn ghost" onclick="discard()">Descartar</button></div>`:'<div class="empty small">Nenhuma alteração pendente. O site está atualizado.</div>'}
+    </div>
+    <div class="card"><h2 style="margin-bottom:12px">Situação do site</h2>
+      <div class="row" style="margin-bottom:10px"><span class="tag ${W.origem==='editado'?'t-urb':'t-ativa'}">${W.origem==='editado'?'Usando dados da empresa':'Usando dados oficiais'}</span></div>
+      <p class="small muted" style="line-height:1.6">${W.atualizado?'Última publicação em '+new Date(W.atualizado).toLocaleString('pt-BR',{dateStyle:'long',timeStyle:'short'})+'.':'O site ainda mostra a tabela oficial original.'}<br>Neste protótipo os dados ficam salvos <b>neste navegador</b>. Na versão final, ficarão em um servidor e valerão para todos os passageiros.</p>
+      <button class="btn danger sm" style="margin-top:14px" onclick="confirmBox('Restaurar dados oficiais?','Todas as linhas, horários e avisos voltam para a tabela oficial original. Faça um backup antes, se quiser guardar as alterações.','Restaurar',()=>{DB.reset();W=clone(DB.load());PEND=[];toast('Dados oficiais restaurados','');route()})">Restaurar dados oficiais</button>
+    </div>
+  </div>
+  <div class="card"><h2 style="margin-bottom:6px">Backup e exportação</h2><p class="small muted" style="margin-bottom:16px">Exporta o que está <b>publicado</b>. Use o backup para levar os dados para outro computador ou para a versão final do sistema.</p>
+    <div class="row wrap">
+      <button class="btn ghost" onclick="download('fronteira-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB.load(),null,2),'application/json')">⬇ Baixar backup (.json)</button>
+      <button class="btn ghost" onclick="download('dados.js',buildDadosJs(DB.load()),'text/javascript')">⬇ Gerar dados.js</button>
+      <label class="btn ghost" style="cursor:pointer">⬆ Importar backup<input type="file" accept=".json,application/json" style="display:none" onchange="importJson(this)"></label>
+      <button class="btn ghost" onclick="exportCsv()">⬇ Horários em planilha (.csv)</button>
+    </div></div>
+  <div class="card"><h2 style="margin-bottom:6px">Histórico de publicações</h2>
+    ${(W.log||[]).length?W.log.map(logItem).join(''):'<div class="empty small">Nenhuma publicação ainda.</div>'}
+  </div>`);
+}
+function buildDadosJs(d){
+  const L=d.linhas.map(l=>({nome:l.nome,tipo:l.tipo,desc:l.desc,cod:l.cod,status:l.status}));
+  const H={};d.linhas.forEach(l=>{if(d.horarios[l.id])H[l.nome]=d.horarios[l.id]});
+  return `// Gerado pela Área da Empresa em ${new Date().toLocaleString('pt-BR')}\nwindow.LINHAS = ${JSON.stringify(L,null,1)};\n\nwindow.HORARIOS = ${JSON.stringify(H)};\n\nwindow.AVISOS = ${JSON.stringify(d.avisos||[],null,1)};\n`;
+}
+function importJson(inp){
+  const f=inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.linhas)||typeof d.horarios!=='object')throw 0;
+    confirmBox('Importar backup?',`O arquivo tem <b>${d.linhas.length} linhas</b>. Ele vai substituir a cópia em edição. Depois, revise e publique.`,'Importar',()=>{W={...clone(d),log:W.log};W.avisos=W.avisos||[];mark('Backup importado ('+f.name+')');toast('Backup carregado','Revise e publique');route()},false)}
+    catch(e){toast('Arquivo inválido','Escolha um backup exportado por este painel.',true)}};
+  r.readAsText(f);inp.value='';
+}
+function exportCsv(){
+  const d=DB.load();const out=['linha;tabela;sentido;parada;horarios'];
+  d.linhas.forEach(l=>(d.horarios[l.id]||[]).forEach(b=>b.dirs.forEach(dir=>dir.rows.forEach(r=>out.push([l.nome,b.day,dir.dir,r[0],r.slice(1).map(x=>x||'—').join(' ')].map(x=>`"${String(x).replace(/"/g,'""')}"`).join(';'))))));
+  download('horarios-fronteira.csv','﻿'+out.join('\r\n'),'text/csv');
+}
+
+window.addEventListener('storage',e=>{if(e.key===DB.KEY&&!PEND.length){W=clone(DB.load());route()}});
+boot();
+</script>
+</body>
+</html>
