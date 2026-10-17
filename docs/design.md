@@ -40,4 +40,4 @@ O site foi redesenhado para parecer um **quadro de horários de transporte públ
 
 **Fontes:** [Atkinson Hyperlegible Next](https://fonts.google.com/specimen/Atkinson+Hyperlegible+Next) (texto) e Atkinson Hyperlegible Mono (horários e códigos das linhas). A família foi criada pelo Braille Institute para máxima legibilidade, o que ajuda passageiros com baixa visão e idosos. Sem internet, o app usa as fontes guardadas pelo service worker.
 
-> As telas do Figma são da primeira versão (gradiente azul). O site já usa o sistema acima.
+No Figma, a página **"v2 · Redesign (atual)"** tem o guia visual e 6 telas do celular nesse sistema: Saídas, Linhas, Horários da linha, Como chegar, Mapa e Favoritos. O HTML de origem está em [`prototipo/mobile/telas-v2.html`](../prototipo/mobile/telas-v2.html). As telas antigas, com gradiente, ficaram preservadas na página **"v1 · Primeira versão (antiga)"**.
