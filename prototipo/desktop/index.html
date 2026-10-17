@@ -360,7 +360,7 @@ footer a{color:var(--brand)}
 
 <footer><div class="container row between wrap">
   <span>Fronteira Transportes · tecnologia Expresso Gaúcho · <a href="../admin/">Área da empresa</a></span>
-  <span id="fonte">Horários da tabela oficial da Fronteira. Posição dos ônibus estimada.</span>
+  <span><span id="fonte">Horários da tabela oficial da Fronteira. Posição dos ônibus estimada.</span><span id="conn"></span></span>
 </div></footer>
 
 <div class="modal-bg" id="modalBg" onclick="closeModal()"><div class="modal" id="modal" role="dialog" aria-modal="true" onclick="event.stopPropagation()"></div></div>
@@ -368,6 +368,8 @@ footer a{color:var(--brand)}
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
 <script src="dados.js"></script>
 <script src="geo.js"></script>
 <script src="db.js"></script>
@@ -752,9 +754,9 @@ function reportPassed(id,bi,di,idx,s){
   const l=LINE(id);const t=l.blocks[bi].dirs[di].trips.find(x=>x.idx===idx);
   const base=predict(l,bi,di,t,true).times[s];const m=NOW().min;
   const delay=Math.round(m-base);
-  DB.setLive(tripKey(l,bi,di,t),{delay,from:s,src:'passageiro',min:m},NOWK());
+  DB.setLive(tripKey(l,bi,di,t),{delay,from:s,src:'passageiro',min:m},NOWK()).catch(()=>toast('Relato não enviado','Sem conexão com o servidor. Tente de novo.',true));
   LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();
-  toast('Obrigado pelo relato',`Previsão corrigida: ${delay>0?delay+' min atrasado':delay<0?(-delay)+' min adiantado':'no horário'}. Com servidor, todos os passageiros veriam.`);
+  toast('Obrigado pelo relato',`Previsão corrigida: ${delay>0?delay+' min atrasado':delay<0?(-delay)+' min adiantado':'no horário'}. ${DB.remoto()?'Já aparece para todos os passageiros.':'Sem servidor, vale só neste aparelho.'}`);
   LIVE();
 }
 
@@ -1009,6 +1011,15 @@ setInterval(()=>{
 setInterval(()=>store.set('sim',S.sim),5000);
 if(DBD.atualizado)$('#fonte').textContent='Horários atualizados pela Fronteira em '+new Date(DBD.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'. Posição dos ônibus estimada, exceto quando indicada como ao vivo.';
 renderClock();route();
+// servidor: baixa a publicação mais recente e escuta atrasos, cancelamentos e relatos
+function connStatus(txt){$('#conn').textContent=txt?' · '+txt:''}
+DB.onChange((t,d)=>{
+  if(t==='conexao')connStatus(d==='SUBSCRIBED'?'Conectado ao servidor':'Servidor indisponível, usando dados salvos');
+  if(t==='publicacao')location.reload();
+  if(t==='aovivo'){LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();if(!$('#modalBg').classList.contains('open'))LIVE()}
+});
+if(DB.remoto())connStatus('Conectando ao servidor…');
+DB.start().then(mudou=>{if(mudou)location.reload()});
 </script>
 </body>
 </html>
