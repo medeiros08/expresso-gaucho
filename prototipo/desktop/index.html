@@ -726,11 +726,12 @@ function vDetail([id]){
   </div></main>`;
   LIVE=()=>{
     const m=NOW().min,s=S.det.stop;
+    const hoje=!l.susp&&B.days.includes(NOW().dow); // a tabela vale hoje?
     const PT=D.trips.map(t=>({t,p:P(l,bi,di,t)})).filter(x=>x.p.times[s]!=null);
-    const nx=PT.find(x=>!x.p.cancel&&x.p.times[s]>=m-0.5);
+    const nx=hoje&&PT.find(x=>!x.p.cancel&&x.p.times[s]>=m-0.5);
     const sel=S.det.trip!=null?PT.find(x=>x.t.idx===S.det.trip):(nx||PT[PT.length-1]);
     // relato de passageiro: a viagem prevista mais perto de agora nesta parada
-    const cand=PT.filter(x=>!x.p.cancel&&Math.abs(x.p.times[s]-m)<=15&&!(x.p.src==='passageiro'&&x.p.from===s)).sort((a,b)=>Math.abs(a.p.times[s]-m)-Math.abs(b.p.times[s]-m))[0];
+    const cand=hoje&&PT.filter(x=>!x.p.cancel&&Math.abs(x.p.times[s]-m)<=15&&!(x.p.src==='passageiro'&&x.p.from===s)).sort((a,b)=>Math.abs(a.p.times[s]-m)-Math.abs(b.p.times[s]-m))[0];
     const report=cand?`<div class="report"><span class="small muted">Está na parada?</span><button class="btn sec sm" onclick="reportPassed('${l.id}',${bi},${di},${cand.t.idx},${s})">${ICON.bus} O ônibus das ${fmt(cand.p.times[s])} passou agora</button></div>`:'';
     if(nx){const t=nx.p.times[s];const e=eta(t-m);const last=nx.p.times.filter(x=>x!=null).slice(-1)[0];
       $('#nextBox').innerHTML=`<div class="small muted" style="margin-bottom:4px">Próximo ônibus em ${esc(D.stops[s])}</div><div class="nextdep"><span class="big">${fmt(t)}</span><span class="in">${e.b==='agora'?'agora':'em '+e.b+(e.s?' '+e.s:'')}</span></div>
@@ -738,7 +739,7 @@ function vDetail([id]){
       <div class="small muted" style="margin-top:4px">Chega em ${esc(D.stops[D.stops.length-1])} às <span class="mono">${fmt(last)}</span> · <button class="lnk small" onclick="howModal()">Como calculamos</button></div>${report}`;
     }else $('#nextBox').innerHTML=`<div class="small muted" style="margin-bottom:4px">${esc(D.stops[s])}</div><div style="font-size:22px;font-weight:700">Sem mais ônibus hoje</div><div class="small muted" style="margin-top:4px">Primeiro horário: <span class="mono">${PT[0]?fmt(PT[0].t.times[s]):'—'}</span></div>${report}`;
     $('#tgrid').innerHTML=PT.map(x=>{const v=x.p.times[s];const c=x===sel?'on':x===nx?'next':v<m-0.5?'past':'';return `<button class="tm ${c} ${isLive(x.p)?'lv':''} ${x.p.cancel?'cx':''}" aria-pressed="${x===sel}" title="${x.p.cancel?'Cancelada':isLive(x.p)?'Com informação ao vivo':''}" onclick="S.det.trip=${x.t.idx};LIVE()">${fmt(v)}</button>`}).join('');
-    if(sel){const p=sel.p,pos=busPos(p,m);
+    if(sel){const p=sel.p,pos=hoje&&busPos(p,m);
       $('#itinSub').innerHTML='Viagem das '+fmt(p.start)+(p.cancel?' · cancelada':pos?' · em trânsito':p.end<m?' · concluída':'')+'<br>'+srcShort(p);
       $('#itin').innerHTML=D.stops.map((st,i)=>{const t=p.times[i];if(t==null)return'';const done=t<m;
         const here=pos&&((pos.from===i&&pos.f<0.5)||(pos.to===i&&pos.f>=0.5));
@@ -898,7 +899,8 @@ function vMap(){
   }
   LIVE=()=>{
     const m=NOW().min;
-    const act=D.trips.map(t=>({t,p:P(l,bi,di,t)})).map(x=>({...x,pos:busPos(x.p,m)})).filter(x=>x.pos);
+    const hoje=!l.susp&&B.days.includes(NOW().dow); // a tabela vale hoje?
+    const act=hoje?D.trips.map(t=>({t,p:P(l,bi,di,t)})).map(x=>({...x,pos:busPos(x.p,m)})).filter(x=>x.pos):[];
     if(cidade&&window._lmap){
       const vivos=new Set();
       act.forEach(x=>{const k=x.t.idx;vivos.add(k);
@@ -918,7 +920,7 @@ function vMap(){
     }
     $('#mapSub').textContent=act.length?`${act.length} ônibus em trânsito`:'Nenhum ônibus em trânsito agora';
     $('#busList').innerHTML=act.length?act.map(x=>{const i=x.pos.f>0?x.pos.to:x.pos.from;return `<div class="li" style="cursor:default"><span class="bmk sm ${isLive(x.p)?'live':'est'}">${ICON.bus}</span><div style="min-width:0;flex:1"><div class="nm">Saída das <span class="mono">${fmt(x.p.start)}</span></div><div class="small muted">Indo para ${esc(D.stops[i])} · ${srcShort(x.p)}</div></div><span class="nx">${fmt(x.p.times[i])}</span></div>`}).join(''):`<div class="empty">Nenhum ônibus desta linha circulando às <span class="mono">${fmt(m)}</span>. ${(()=>{const n=D.trips.map(t=>P(l,bi,di,t)).find(p=>!p.cancel&&p.start>m);return n?'Próxima saída às <b class="mono">'+fmt(n.start)+'</b>.':'Operação encerrada hoje.'})()}</div>`;
-    $('#stopEtas').innerHTML=D.stops.map((s,i)=>{const nx=D.trips.map(t=>P(l,bi,di,t)).filter(p=>!p.cancel).map(p=>p.times[i]).filter(v=>v!=null&&v>=m-0.5).sort((a,b)=>a-b)[0];const e=nx!=null?eta(nx-m):null;
+    $('#stopEtas').innerHTML=D.stops.map((s,i)=>{const nx=D.trips.map(t=>P(l,bi,di,t)).filter(p=>hoje&&!p.cancel).map(p=>p.times[i]).filter(v=>v!=null&&v>=m-0.5).sort((a,b)=>a-b)[0];const e=nx!=null?eta(nx-m):null;
       return `<div class="li" onclick="setMyStop('${jsq(s)}')"><span class="nm" style="font-weight:500">${esc(s)}${s===S.myStop?' <span class="small muted">(sua parada)</span>':''}</span><span class="nx" style="color:${e&&e.b==='agora'?'var(--ok)':'var(--ink)'}">${e?(e.b==='agora'?'agora':e.b+(e.s?' '+e.s:'')):'—'}</span></div>`}).join('');
   };
 }
