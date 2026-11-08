@@ -797,6 +797,7 @@ function checkAlerts(){
   S.alerts.forEach(a=>{if(!a.on||!a.days.includes(dow))return;const key=(S.sim.on?'':new Date().toDateString()+'-')+dow+'-'+Math.floor(a.time);
     // usa o horário previsto (com ajustes e informação ao vivo), não só o da tabela
     let when=a.time,p=null;const l=LINE(a.line);
+    if(!l||l.susp)return; // linha suspensa (ou que saiu do ar): não há ônibus para avisar
     const t=l&&l.blocks[a.block]&&l.blocks[a.block].dirs[a.dir]&&l.blocks[a.block].dirs[a.dir].trips.find(x=>x.idx===a.trip);
     if(t&&a.si!=null){p=P(l,a.block,a.dir,t);if(p.cancel)return;if(p.times[a.si]!=null)when=p.times[a.si]}
     const diff=when-min;
