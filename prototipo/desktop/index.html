@@ -562,6 +562,7 @@ function go(h){location.hash=h}
 window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0)});
 let LIVE=()=>{};
 const TITULOS={inicio:'Saídas',linhas:'Linhas',linha:'Linha',planejar:'Como chegar',mapa:'Mapa',favoritos:'Favoritos'};
+let diaTela=null; // dia da semana com que a tela foi montada
 function route(){
   const h=location.hash||'#/inicio';const p=h.slice(2).split('/');
   const k=p[0]==='linha'?'linhas':p[0];
@@ -570,7 +571,7 @@ function route(){
   document.title=(TITULOS[p[0]]||'Saídas')+' · Fronteira';
   if(window._lmap){window._lmap.remove();window._lmap=null}
   const v={inicio:vHome,linhas:vLines,linha:vDetail,planejar:vPlan,mapa:vMap,favoritos:vFav}[p[0]]||vHome;
-  LIVE=()=>{};
+  LIVE=()=>{};diaTela=NOW().dow;
   v(p.slice(1).map(decodeURIComponent));
   LIVE();
 }
@@ -1006,7 +1007,8 @@ if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
 let last=Date.now();
 setInterval(()=>{
   const now=Date.now();const dt=(now-last)/1000;last=now;
-  if(S.sim.on&&S.sim.speed){S.sim.min+=dt*S.sim.speed/60;if(S.sim.min>=1440){S.sim.min-=1440;S.sim.dow=(S.sim.dow+1)%7;route()}}
+  if(S.sim.on&&S.sim.speed){S.sim.min+=dt*S.sim.speed/60;if(S.sim.min>=1440){S.sim.min-=1440;S.sim.dow=(S.sim.dow+1)%7}}
+  if(NOW().dow!==diaTela)route(); // virou o dia (relógio real ou demo): monta a tela de novo
   LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();
   renderClock();checkAlerts();
   if(!$('#modalBg').classList.contains('open'))LIVE();
