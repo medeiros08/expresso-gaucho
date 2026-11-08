@@ -596,7 +596,7 @@ function howModal(){
   <div class="howrow"><span class="src live"><i></i>Ao vivo</span><p>Alguém informou como a viagem está agora: a empresa (atraso ou cancelamento) ou um passageiro que viu o ônibus passar. As paradas seguintes são corrigidas.</p></div>
   <p class="small muted" style="margin:14px 0 18px">No mapa, o ônibus <b style="color:var(--ok)">verde</b> tem informação ao vivo; o <b>tracejado</b> é a posição estimada. A posição real com GPS depende de um aparelho no ônibus, que ainda não existe.</p>
   <button class="btn" style="width:100%" onclick="closeModal()">Entendi</button>`;
-  $('#modalBg').classList.add('open');
+  abrirModal($('#modal button'));
 }
 
 /* ================= TELA: SAÍDAS (início) ================= */
@@ -777,7 +777,7 @@ function openAlert(id){
   </div>
   <label class="row small" style="gap:8px;margin-bottom:20px"><input type="checkbox" id="aRep" checked> Repetir nos dias em que a linha opera</label>
   <div class="row" style="justify-content:flex-end"><button class="btn sec" onclick="closeModal()">Cancelar</button><button class="btn" onclick="saveAlert('${id}')">Criar aviso</button></div>`;
-  $('#modalBg').classList.add('open');refreshAlertTimes(id,def&&def.idx);$('#aStop').focus();
+  refreshAlertTimes(id,def&&def.idx);abrirModal($('#aStop'));
 }
 function refreshAlertTimes(id,pref){
   const l=LINE(id);const D=l.blocks[S.det.block].dirs[S.det.dir];const si=+$('#aStop').value;
@@ -791,7 +791,10 @@ function saveAlert(id){
   if('Notification'in window&&Notification.permission==='default')try{Notification.requestPermission()}catch(e){}
   route();
 }
-function closeModal(){$('#modalBg').classList.remove('open')}
+// o foco entra no diálogo ao abrir e volta para quem o abriu ao fechar; sem isso o Tab seguia pela página atrás do fundo escuro
+let modalVolta=null;
+function abrirModal(alvo){modalVolta=document.activeElement;$('#modalBg').classList.add('open');if(alvo)alvo.focus()}
+function closeModal(){if(!$('#modalBg').classList.contains('open'))return;$('#modalBg').classList.remove('open');if(modalVolta&&document.contains(modalVolta))modalVolta.focus();modalVolta=null}
 function checkAlerts(){
   const {dow,min}=NOW();
   S.alerts.forEach(a=>{if(!a.on||!a.days.includes(dow))return;const key=(S.sim.on?'':new Date().toDateString()+'-')+dow+'-'+Math.floor(a.time);
@@ -988,7 +991,7 @@ async function installApp(){
    `<li><span>No Safari, toque em <b>Compartilhar</b> na barra inferior.</span></li><li><span>Toque em <b>Adicionar à Tela de Início</b>.</span></li><li><span>Toque em <b>Adicionar</b>.</span></li>`:
    `<li><span>Abra o menu do navegador (<b>⋮</b> no Chrome, <b>…</b> no Edge).</span></li><li><span>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>.</span></li><li><span>Confirme.</span></li>`}</ol>
   <button class="btn" style="width:100%" onclick="closeModal()">Entendi</button>`;
-  $('#modalBg').classList.add('open');
+  abrirModal($('#modal button'));
 }
 function setNet(){$('#netbar').classList.toggle('show',!navigator.onLine)}
 window.addEventListener('offline',setNet);
