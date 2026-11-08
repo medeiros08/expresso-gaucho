@@ -897,7 +897,7 @@ function vMap(){
       L.circleMarker([c.lat,c.lng],{radius:ponta?7:5.5,color:'#002460',weight:2.5,fillColor:ponta?'#002460':'#fff',fillOpacity:1,dashArray:c.prec==='ponto'||c.prec==='conferida'?null:'3 3'})
        .bindTooltip(esc(s)+(c.prec==='estimada'?' · posição estimada':c.prec==='aproximada'?' · posição aproximada':''),{direction:'top'})
        .on('click',()=>setMyStop(s)).addTo(map)});
-    map.fitBounds(L.latLngBounds(full),{padding:[24,24]});
+    if(full.length>1)map.fitBounds(L.latLngBounds(full),{padding:[24,24]});else map.setView(g.pts[0],16); // sentido com uma parada só (ex.: Sábado da TN)
   }
   LIVE=()=>{
     const m=NOW().min;
