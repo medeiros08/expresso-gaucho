@@ -561,6 +561,15 @@ function plan(o,d){
 function go(h){location.hash=h}
 window.addEventListener('hashchange',()=>{route();window.scrollTo(0,0)});
 let LIVE=()=>{};
+// LIVE refaz as listas (a cada segundo e ao tocar num horário): o item com o foco do teclado é recriado e o foco caía no body.
+// Devolve o foco ao item na mesma posição da mesma lista.
+const FOCAVEIS='button,a[href],[tabindex="0"],select,input';
+function vivo(){
+  const a=document.activeElement,box=a&&a!==document.body?a.closest('#app [id]'):null;
+  const i=box?[...box.querySelectorAll(FOCAVEIS)].indexOf(a):-1;
+  LIVE();
+  if(i>=0&&!document.contains(a)&&document.contains(box)){const n=box.querySelectorAll(FOCAVEIS)[i];if(n)n.focus({preventScroll:true})}
+}
 const TITULOS={inicio:'Saídas',linhas:'Linhas',linha:'Linha',planejar:'Como chegar',mapa:'Mapa',favoritos:'Favoritos'};
 let diaTela=null; // dia da semana com que a tela foi montada
 function route(){
@@ -739,7 +748,7 @@ function vDetail([id]){
       <div style="margin-top:6px">${srcLabel(nx.p)}${Math.round(nx.p.raw[s])!==Math.round(t)?` <span class="small muted">· tabela: <span class="mono">${fmt(nx.p.raw[s])}</span></span>`:''}</div>
       <div class="small muted" style="margin-top:4px">Chega em ${esc(D.stops[D.stops.length-1])} às <span class="mono">${fmt(last)}</span> · <button class="lnk small" onclick="howModal()">Como calculamos</button></div>${report}`;
     }else $('#nextBox').innerHTML=`<div class="small muted" style="margin-bottom:4px">${esc(D.stops[s])}</div><div style="font-size:22px;font-weight:700">Sem mais ônibus hoje</div><div class="small muted" style="margin-top:4px">Primeiro horário: <span class="mono">${PT[0]?fmt(PT[0].t.times[s]):'—'}</span></div>${report}`;
-    $('#tgrid').innerHTML=PT.map(x=>{const v=x.p.times[s];const c=x===sel?'on':x===nx?'next':v<m-0.5?'past':'';return `<button class="tm ${c} ${isLive(x.p)?'lv':''} ${x.p.cancel?'cx':''}" aria-pressed="${x===sel}" title="${x.p.cancel?'Cancelada':isLive(x.p)?'Com informação ao vivo':''}" onclick="S.det.trip=${x.t.idx};LIVE()">${fmt(v)}</button>`}).join('');
+    $('#tgrid').innerHTML=PT.map(x=>{const v=x.p.times[s];const c=x===sel?'on':x===nx?'next':v<m-0.5?'past':'';return `<button class="tm ${c} ${isLive(x.p)?'lv':''} ${x.p.cancel?'cx':''}" aria-pressed="${x===sel}" title="${x.p.cancel?'Cancelada':isLive(x.p)?'Com informação ao vivo':''}" onclick="S.det.trip=${x.t.idx};vivo()">${fmt(v)}</button>`}).join('');
     if(sel){const p=sel.p,pos=hoje&&busPos(p,m);
       $('#itinSub').innerHTML='Viagem das '+fmt(p.start)+(p.cancel?' · cancelada':pos?' · em trânsito':p.end<m?' · concluída':'')+'<br>'+srcShort(p);
       $('#itin').innerHTML=D.stops.map((st,i)=>{const t=p.times[i];if(t==null)return'';const done=t<m;
@@ -969,7 +978,7 @@ function vFav(){
       <button class="switch ${a.on?'on':''}" aria-label="${a.on?'Desativar':'Ativar'} aviso" onclick="toggleAlert(${a.id})"></button><button class="star" aria-label="Excluir aviso" onclick="delAlert(${a.id})">${ICON.trash}</button></div>`}).join(''):'<div class="empty">Nenhum aviso. Abra uma linha e toque em <b>Avisar quando chegar</b>.</div>';
   };
 }
-function toggleAlert(id){const a=S.alerts.find(x=>x.id===id);a.on=!a.on;a.fired=null;save();LIVE()}
+function toggleAlert(id){const a=S.alerts.find(x=>x.id===id);a.on=!a.on;a.fired=null;save();vivo()}
 function delAlert(id){S.alerts=S.alerts.filter(x=>x.id!==id);save();route()}
 function testAlert(){toast('Seu ônibus está chegando','IP Ibirapuitã → Polivalente passa em Unipampa em 5 min',true)}
 
@@ -1013,7 +1022,7 @@ setInterval(()=>{
   if(NOW().dow!==diaTela)route(); // virou o dia (relógio real ou demo): monta a tela de novo
   LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();
   renderClock();checkAlerts();
-  if(!$('#modalBg').classList.contains('open'))LIVE();
+  if(!$('#modalBg').classList.contains('open'))vivo();
 },1000);
 setInterval(()=>store.set('sim',S.sim),5000);
 if(DBD.atualizado)$('#fonte').textContent='Horários atualizados pela Fronteira em '+new Date(DBD.atualizado).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})+'. Posição dos ônibus estimada, exceto quando indicada como ao vivo.';
@@ -1023,7 +1032,7 @@ function connStatus(txt){$('#conn').textContent=txt?' · '+txt:''}
 DB.onChange((t,d)=>{
   if(t==='conexao')connStatus(d==='SUBSCRIBED'?'Conectado ao servidor':'Servidor indisponível, usando dados salvos');
   if(t==='publicacao')location.reload();
-  if(t==='aovivo'){LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();if(!$('#modalBg').classList.contains('open'))LIVE()}
+  if(t==='aovivo'){LIVEDATA=DB.loadLive(NOWK());PCACHE.clear();if(!$('#modalBg').classList.contains('open'))vivo()}
 });
 if(DB.remoto())connStatus('Conectando ao servidor…');
 DB.start().then(mudou=>{if(mudou)location.reload()});
