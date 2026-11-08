@@ -793,12 +793,13 @@ function saveAlert(id){
 function closeModal(){$('#modalBg').classList.remove('open')}
 function checkAlerts(){
   const {dow,min}=NOW();
-  S.alerts.forEach(a=>{if(!a.on||!a.days.includes(dow))return;const key=dow+'-'+Math.floor(a.time);
+  S.alerts.forEach(a=>{if(!a.on||!a.days.includes(dow))return;const key=(S.sim.on?'':new Date().toDateString()+'-')+dow+'-'+Math.floor(a.time);
     // usa o horário previsto (com ajustes e informação ao vivo), não só o da tabela
     let when=a.time,p=null;const l=LINE(a.line);
     const t=l&&l.blocks[a.block]&&l.blocks[a.block].dirs[a.dir]&&l.blocks[a.block].dirs[a.dir].trips.find(x=>x.idx===a.trip);
     if(t&&a.si!=null){p=P(l,a.block,a.dir,t);if(p.cancel)return;if(p.times[a.si]!=null)when=p.times[a.si]}
     const diff=when-min;
+    if(diff>a.before&&a.fired===key)a.fired=null; // ainda não chegou a hora: libera o aviso de novo (mesmo dia da semana na semana seguinte)
     if(diff<=a.before&&diff>-1&&a.fired!==key){a.fired=key;
       const msg=`${l.cod} ${a.dirName} passa em ${a.stop} às ${fmt(when)} (${Math.max(0,Math.round(diff))} min)${p&&isLive(p)?' · ao vivo':''}`;
       toast('Seu ônibus está chegando',msg,true);
