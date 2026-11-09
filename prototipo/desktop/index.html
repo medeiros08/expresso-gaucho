@@ -516,8 +516,9 @@ function setSpeed(s){S.sim.speed=s;save();renderClock()}
 function arrivalsAt(stop,n,horizon=180){
   const {dow,min}=NOW();const out=[];
   LINES.forEach(l=>eachTrip(l,dow,(b,bi,d,di,t,p)=>{
-    const si=d.stops.indexOf(stop);if(si<0)return;
-    const tm=p.times[si];if(tm==null||tm<min-0.5||tm-min>horizon)return;
+    // a parada pode se repetir no sentido (ex.: Praça Gen. Osório na ida e na volta do PI): vale a primeira passagem que ainda não aconteceu
+    const si=d.stops.findIndex((s,i)=>s===stop&&p.times[i]!=null&&p.times[i]>=min-0.5);if(si<0)return;
+    const tm=p.times[si];if(tm-min>horizon)return;
     if(!p.times.some((x,k)=>k>si&&x!=null))return; // a viagem termina aqui: não serve para embarcar
     out.push({l,b,d,di,bi,t:tm,trip:t,si,p});
   }));
@@ -550,9 +551,14 @@ function plan(o,d){
   const {dow,min}=NOW();const out=[];
   LINES.forEach(l=>eachTrip(l,dow,(b,bi,dir,di,t,p)=>{
     if(p.cancel)return;
-    const oi=dir.stops.indexOf(o);if(oi<0)return;
-    const dj=dir.stops.indexOf(d,oi+1);if(dj<0)return;
-    const a=p.times[oi],c=p.times[dj];if(a!=null&&c!=null&&a>=min-0.5)out.push({l,b,bi,dir,di,dep:a,arr:c,trip:t,oi,dj,p});
+    // origem ou destino podem se repetir no sentido: embarca na primeira passagem que ainda não aconteceu e tem o destino depois
+    let oi=-1,dj=-1;
+    for(let i=0;i<dir.stops.length&&dj<0;i++){
+      if(dir.stops[i]!==o||p.times[i]==null||p.times[i]<min-0.5)continue;
+      for(let j=i+1;j<dir.stops.length;j++)if(dir.stops[j]===d&&p.times[j]!=null){oi=i;dj=j;break}
+    }
+    if(dj<0)return;
+    out.push({l,b,bi,dir,di,dep:p.times[oi],arr:p.times[dj],trip:t,oi,dj,p});
   }));
   return out.sort((x,y)=>x.dep-y.dep);
 }
@@ -629,7 +635,7 @@ function vHome(){
     const a=arrivalsAt(S.myStop,8);
     $('#homeSub').textContent=a.length?`Próximos ${a.length} ônibus nas próximas 3 horas · ${DIAS[NOW().dow]}`:`${DIAS[NOW().dow]}, ${fmt(m)}`;
     $('#pfrom').textContent=S.myStop;
-    $('#arr').innerHTML=a.length?a.map(x=>`<div class="dep ${x.p.cancel?'cancel':''}" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(x.d.stops[x.si])}')" onkeydown="if(event.key==='Enter')this.click()">
+    $('#arr').innerHTML=a.length?a.map(x=>`<div class="dep ${x.p.cancel?'cancel':''}" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(x.d.stops[x.si])}',${x.si})" onkeydown="if(event.key==='Enter')this.click()">
       ${badge(x.l)}<div style="min-width:0"><div class="to">${esc(destOf(x.d.name))}</div><div class="via">${esc(x.l.nome)} · ${srcShort(x.p)}</div></div>${whenHtml(x.t,m,x.p,x.si)}</div>`).join(''):
       `<div class="empty">Nenhum ônibus passa em <b>${esc(S.myStop)}</b> nas próximas 3 horas.<br>Escolha outra parada acima ou ajuste o relógio do modo demonstração no topo.</div>`;
     const favs=[...S.fav].map(LINE).filter(Boolean);
@@ -670,9 +676,9 @@ function vLines(){
 }
 
 /* ================= TELA: LINHA ================= */
-function openTrip(id,bi,di,tripIdx,stop){
+function openTrip(id,bi,di,tripIdx,stop,si){
   const l=LINE(id);const d=l.blocks[bi].dirs[di];
-  S.det={block:bi,dir:di,stop:Math.max(0,d.stops.indexOf(stop)),trip:tripIdx,table:false,_id:id};go('#/linha/'+id);
+  S.det={block:bi,dir:di,stop:si!=null?si:Math.max(0,d.stops.indexOf(stop)),trip:tripIdx,table:false,_id:id};go('#/linha/'+id);
 }
 function vDetail([id]){
   const l=LINE(id);if(!l)return go('#/linhas');
@@ -831,7 +837,7 @@ function vPlan([o,d]){
     $('#pt').textContent=S.plan.o===S.plan.d?'Escolha paradas diferentes':`${S.plan.o} → ${S.plan.d}`;
     if(S.plan.o===S.plan.d){$('#pres').innerHTML='';$('#pn').textContent='';return}
     $('#pn').textContent=r.length?`${Math.min(r.length,8)} de ${r.length} viagens hoje`:'';
-    $('#pres').innerHTML=r.length?r.slice(0,8).map(x=>`<div class="trip" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(S.plan.o)}')" onkeydown="if(event.key==='Enter')this.click()">
+    $('#pres').innerHTML=r.length?r.slice(0,8).map(x=>`<div class="trip" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(S.plan.o)}',${x.oi})" onkeydown="if(event.key==='Enter')this.click()">
       ${badge(x.l)}<div style="min-width:0"><div style="font-weight:700">${esc(destOf(x.dir.name))}</div><div class="small muted">${esc(x.l.nome)} · ${x.dj-x.oi} ${x.dj-x.oi===1?'parada':'paradas'} · <span class="mono">${Math.round(x.arr-x.dep)} min</span> · ${srcShort(x.p)}</div></div>
       <div class="tt">${fmt(x.dep)}<span>→</span>${fmt(x.arr)}</div>
       ${whenHtml(x.dep,m).replace(/<span class="at">.*?<\/span>/,'')}</div>`).join(''):
