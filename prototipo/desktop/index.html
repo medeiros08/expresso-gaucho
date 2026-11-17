@@ -46,6 +46,7 @@ p{text-wrap:pretty}
 .row{display:flex;align-items:center;gap:10px}
 .between{justify-content:space-between}
 .wrap{flex-wrap:wrap}
+[hidden]{display:none!important}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
 /* topo */
@@ -123,9 +124,14 @@ select.inp{padding-right:30px;appearance:none;background:var(--surface) url("dat
 .notices{margin-bottom:16px}
 
 /* quadro de saídas */
-.dep{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);cursor:pointer;transition:background .12s}
+.dephead{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:14px;padding:8px 18px;background:var(--hover);border-bottom:1px solid var(--line);font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+.dephead span:last-child{text-align:right}
+.dep{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 18px;border-top:1px solid var(--line);cursor:pointer;transition:background .12s}
 .dep:first-child{border-top:none}
 .dep:hover{background:var(--hover)}
+.dep.soon{box-shadow:inset 3px 0 0 var(--ok)}
+.when.soon b{color:var(--ok)}
+.when .soonlbl{font-family:var(--font);font-weight:700;color:var(--ok);margin-right:5px}
 .dep .to{font-weight:700;font-size:16px}
 .dep .via{font-size:13.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .when{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1.1}
@@ -302,11 +308,12 @@ footer a{color:var(--brand)}
   .nextdep .big{font-size:44px}
   #leaf{height:380px}
   .howrow{grid-template-columns:1fr;gap:4px}
-  .dep,.li,.stop{padding-left:14px;padding-right:14px}
+  .dep,.dephead,.li,.stop{padding-left:14px;padding-right:14px}
   .stop:before{left:24px}
   footer{display:none}
 }
-@media (max-width:480px){.brand span{display:none}.nbtn .wd{display:none}}
+@media (max-width:480px){.nbtn .wd{display:none}.dep,.dephead{gap:12px}.dep .via{white-space:normal}.when .soonlbl{display:none}}
+@media (max-width:340px){.brand span{display:none}}
 </style>
 </head>
 <body>
@@ -347,6 +354,11 @@ footer a{color:var(--brand)}
               <button data-s="10" onclick="setSpeed(10)">10×</button>
               <button data-s="60" onclick="setSpeed(60)">60×</button>
               <button data-s="0" onclick="setSpeed(0)">Pausar</button>
+            </div>
+            <div id="simLive" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+              <span class="fl">Simular informação ao vivo</span>
+              <p class="small muted" style="margin-bottom:10px">Aplica no próximo ônibus da sua parada o que a empresa informaria pelo painel. Vale só neste aparelho.</p>
+              <div class="row wrap" style="gap:6px"><button class="btn sec sm" onclick="simLive('atraso')">Atraso de 4 min</button><button class="btn sec sm" onclick="simLive('cancel')">Cancelar viagem</button><button class="btn sec sm" onclick="simLive(null)">Limpar</button></div>
             </div>
           </div>
         </div>
@@ -504,6 +516,7 @@ function renderClock(){
   $('#simDay').value=S.sim.dow;
   if(document.activeElement!==$('#simTime'))$('#simTime').value=String(Math.floor(S.sim.min/60)%24).padStart(2,'0')+':'+String(Math.floor(S.sim.min%60)).padStart(2,'0');
   document.querySelectorAll('#speeds button').forEach(c=>c.setAttribute('aria-pressed',+c.dataset.s===S.sim.speed));
+  $('#simLive').hidden=DB.remoto();
 }
 function togglePop(e){e.stopPropagation();$('#pop').classList.toggle('open')}
 document.addEventListener('click',()=>$('#pop').classList.remove('open'));
@@ -511,6 +524,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#pop').classList
 function toggleSim(){S.sim.on=!S.sim.on;save();renderClock();route()}
 function setSim(){const [h,m]=$('#simTime').value.split(':').map(Number);S.sim.dow=+$('#simDay').value;if(!isNaN(h))S.sim.min=h*60+m;save();renderClock();route()}
 function setSpeed(s){S.sim.speed=s;save();renderClock()}
+// modo demonstração: simula, no próximo ônibus da parada escolhida, o que a empresa informaria pelo painel
+function simLive(tipo){
+  const n=NOWK();
+  if(!tipo){Object.keys(LIVEDATA).forEach(k=>DB.setLive(k,null,n));LIVEDATA=DB.loadLive(n);PCACHE.clear();LIVE();toast('Informações ao vivo apagadas','Os horários voltam a vir da tabela.');return}
+  const x=arrivalsAt(S.myStop,8).find(a=>!a.p.cancel&&!isLive(a.p)&&a.t>=NOW().min+1);
+  if(!x)return toast('Nenhum ônibus para simular',`Não há saídas de ${S.myStop} nas próximas 3 horas.`);
+  const info=tipo==='cancel'?{cancel:true,src:'empresa',min:n.min,from:0}:{delay:4,src:'empresa',min:n.min,from:0};
+  DB.setLive(tripKey(x.l,x.bi,x.di,x.trip),info,n);LIVEDATA=DB.loadLive(n);PCACHE.clear();LIVE();
+  toast(tipo==='cancel'?'Viagem cancelada (simulação)':'Atraso informado (simulação)',`${x.l.cod} ${destOf(x.d.name)}, ${fmt(x.p.start)}${tipo==='cancel'?'':': +4 min'}`);
+}
 
 /* ================= CONSULTAS ================= */
 // próximas passagens numa parada (todas as linhas), já com a previsão
@@ -602,7 +625,8 @@ const stopOptions=sel=>ALLSTOPS.map(s=>`<option ${s===sel?'selected':''}>${esc(s
 function whenHtml(t,m,p,si){
   const e=eta(t-m);
   const sched=p&&si!=null&&p.raw[si]!=null&&Math.round(p.raw[si])!==Math.round(t)?`<span class="sched" title="Horário da tabela">${fmt(p.raw[si])}</span>`:'';
-  return `<div class="when ${e.b==='agora'?'now':''} ${p&&p.cancel?'cx':''}"><b>${p&&p.cancel?'—':e.b}${!(p&&p.cancel)&&e.s?`<small>${e.s}</small>`:''}</b><span class="at">${sched}${fmt(t)}</span></div>`;
+  const soon=p&&!p.cancel&&t-m>=1&&t-m<=5;
+  return `<div class="when ${e.b==='agora'?'now':''} ${soon?'soon':''} ${p&&p.cancel?'cx':''}"><b>${p&&p.cancel?'—':e.b}${!(p&&p.cancel)&&e.s?`<small>${e.s}</small>`:''}</b><span class="at">${soon?'<span class="soonlbl">chegando</span>':''}${sched}${fmt(t)}</span></div>`;
 }
 function howModal(){
   $('#modal').innerHTML=`<h3>Como a previsão é calculada</h3>
@@ -623,7 +647,7 @@ function vHome(){
     </div></header>
   <main><div class="container cols">
     <div>
-      <section class="panel" aria-labelledby="hDep"><h2 id="hDep" class="sr">Próximas saídas</h2><div id="arr"></div></section>
+      <section class="panel" aria-labelledby="hDep"><h2 id="hDep" class="sr">Próximas saídas</h2><div class="dephead" aria-hidden="true"><span>Linha</span><span>Destino</span><span>Sai em</span></div><div id="arr"></div></section>
       ${avisosHtml()?`<div style="margin-top:16px">${avisosHtml()}</div>`:''}
     </div>
     <div class="stack">
@@ -644,8 +668,8 @@ function vHome(){
     const m=NOW().min;
     const a=arrivalsAt(S.myStop,8);
     $('#homeSub').textContent=a.length?`Próximos ${a.length} ônibus nas próximas 3 horas · ${DIAS[NOW().dow]}`:`${DIAS[NOW().dow]}, ${fmt(m)}`;
-    $('#pfrom').textContent=S.myStop;
-    $('#arr').innerHTML=a.length?a.map(x=>`<div class="dep ${x.p.cancel?'cancel':''}" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(x.d.stops[x.si])}',${x.si})" onkeydown="if(event.key==='Enter')this.click()">
+    $('#pfrom').textContent=S.myStop;$('.dephead').hidden=!a.length;
+    $('#arr').innerHTML=a.length?a.map(x=>`<div class="dep ${x.p.cancel?'cancel':''} ${!x.p.cancel&&x.t-m<=5?'soon':''}" role="link" tabindex="0" onclick="openTrip('${x.l.id}',${x.bi},${x.di},${x.trip.idx},'${jsq(x.d.stops[x.si])}',${x.si})" onkeydown="if(event.key==='Enter')this.click()">
       ${badge(x.l)}<div style="min-width:0"><div class="to">${esc(destOf(x.d.name))}</div><div class="via">${esc(x.l.nome)} · ${srcShort(x.p)}</div></div>${whenHtml(x.t,m,x.p,x.si)}</div>`).join(''):
       `<div class="empty">Nenhum ônibus passa em <b>${esc(S.myStop)}</b> nas próximas 3 horas.<br>Escolha outra parada acima ou ajuste o relógio do modo demonstração no topo.</div>`;
     const favs=[...S.fav].map(LINE).filter(Boolean);
