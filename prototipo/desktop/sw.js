@@ -2,7 +2,7 @@
 // Guarda o app e os horários no aparelho para funcionar sem internet.
 // Estratégia: mostra a cópia salva na hora e, se houver internet, busca a versão
 // nova em segundo plano (stale-while-revalidate). Troque VERSAO ao mudar a lista abaixo.
-const VERSAO = 'fronteira-v5';
+const VERSAO = 'fronteira-v6';
 const ARQUIVOS = [
   './',
   './index.html',
